@@ -2,48 +2,65 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
+import Image from 'next/image'; // Імпортуємо Image для фонового зображення
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions);
 
-  return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gray-900 text-white">
-        <h1 className="text-6xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-          Welcome to GameUniverse!
-        </h1>
-        <p className="text-xl text-center mb-12 max-w-2xl">
-          Discover, explore, and connect with your favorite video games.
-        </p>
+    return (
+        <main className="relative flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 text-white overflow-hidden">
+            {/* Фонове зображення з напівпрозорим оверлеєм */}
+            {/*<div className="absolute inset-0 z-0">*/}
+            {/*    <Image*/}
+            {/*        src="https://img.freepik.com/free-vector/dark-hexagonal-background-with-gradient-color_79603-1409.jpg?semt=ais_hybrid&w=740" // Замініть на реальне зображення, якщо є*/}
+            {/*        alt="Ігровий фон"*/}
+            {/*        fill*/}
+            {/*        sizes="100vw"*/}
+            {/*        style={{ objectFit: 'cover' }}*/}
+            {/*        className="opacity-50" // Зробить зображення напівпрозорим*/}
+            {/*    />*/}
+            {/*    <div className="absolute inset-0 bg-gray-900 opacity-70"></div> /!* Темний оверлей для кращої читабельності тексту *!/*/}
+            {/*</div>*/}
 
-        <div className="flex gap-4">
-          <Link href="/games" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
-            Explore Games
-          </Link>
-          <Link href="/about" className="px-6 py-3 border border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700 font-semibold rounded-lg shadow-md transition duration-300">
-            Learn More
-          </Link>
-          {session ? (
-              <Link href="/dashboard" className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
-                Go to Dashboard
-              </Link>
-          ) : (
-              <Link href="/auth/signin" className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
-                Sign In
-              </Link>
-          )}
-        </div>
+            {/* Контент сторінки */}
+            <div className="relative z-10 flex flex-col items-center justify-center text-center">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 sm:mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 drop-shadow-lg">
+                    Ласкаво просимо до GameUniverse!
+                </h1>
+                <p className="text-lg sm:text-xl text-center mb-8 sm:mb-12 max-w-xl sm:max-w-2xl leading-relaxed">
+                    Відкривайте, досліджуйте та поєднуйтесь зі своїми улюбленими відеоіграми.
+                </p>
 
-        {session && session.user?.role === 'ADMIN' && (
-            <div className="mt-12 p-6 bg-gray-800 rounded-lg shadow-xl border border-gray-700">
-              <h2 className="text-3xl font-semibold text-red-400 mb-4">Admin Access</h2>
-              <p className="text-lg text-gray-300 mb-6">
-                You are logged in as an administrator. You can access the admin dashboard.
-              </p>
-              <Link href="/admin" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
-                Admin Panel
-              </Link>
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                    <Link href="/games" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-105">
+                        Досліджуйте ігри
+                    </Link>
+                    <Link href="/about" className="px-6 py-3 border border-gray-600 text-gray-300 hover:text-white hover:bg-gray-700 font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-105">
+                        Про нас
+                    </Link>
+                    {session ? (
+                        <Link href="/profile" className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-105">
+                            Мій Профіль
+                        </Link>
+                    ) : (
+                        <Link href="/auth/signin" className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-105">
+                            Увійти
+                        </Link>
+                    )}
+                </div>
+
+                {session && session.user?.role === 'ADMIN' && (
+                    <div className="mt-12 p-6 bg-gray-800 rounded-lg shadow-2xl border border-gray-700 max-w-sm sm:max-w-md">
+                        <h2 className="text-2xl sm:text-3xl font-semibold text-red-400 mb-4">Доступ Адміністратора</h2>
+                        <p className="text-md sm:text-lg text-gray-300 mb-6">
+                            Ви увійшли як адміністратор. Ви можете отримати доступ до панелі адміністратора.
+                        </p>
+                        <Link href="/admin" className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition duration-300 transform hover:scale-105">
+                            Панель Адміністратора
+                        </Link>
+                    </div>
+                )}
             </div>
-        )}
-      </main>
-  );
+        </main>
+    );
 }

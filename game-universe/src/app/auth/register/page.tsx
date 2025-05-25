@@ -5,19 +5,33 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
+// Імпортуємо іконки для показу/приховування пароля
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 export default function RegisterPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState(''); // Додано поле для підтвердження пароля
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // Стан для відображення/приховування пароля
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Стан для відображення/приховування підтвердження пароля
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setSuccess(null);
+        setIsLoading(true);
+
+        if (password !== confirmPassword) {
+            setError('Паролі не співпадають.');
+            setIsLoading(false);
+            return;
+        }
 
         try {
             const res = await fetch('/api/register', {
@@ -31,11 +45,11 @@ export default function RegisterPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.error || 'Failed to register.');
+                setError(data.error || 'Не вдалося зареєструватись.');
                 return;
             }
 
-            setSuccess('Registration successful! Redirecting to login...');
+            setSuccess('Реєстрація успішна! Перенаправлення до входу...');
             const signInResult = await signIn('credentials', {
                 redirect: false,
                 email,
@@ -43,74 +57,115 @@ export default function RegisterPage() {
             });
 
             if (signInResult?.error) {
-                setError('Registration successful, but failed to log in automatically: ' + signInResult.error);
+                setError('Реєстрація успішна, але автоматичний вхід не вдався: ' + signInResult.error);
             } else if (signInResult?.ok) {
-                router.push('/profile');
+                router.push('/');
             }
 
         } catch (err) {
-            console.error('Registration error:', err);
-            setError('An unexpected error occurred during registration.');
+            console.error('Помилка реєстрації:', err);
+            setError('Виникла неочікувана помилка під час реєстрації.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <main className="flex items-center justify-center min-h-[calc(100vh-100px)] bg-gray-900">
-            <div className="content-card bg-white text-gray-800"> {/* Змінено фон форми на світлий */}
-                <h1 className="text-3xl font-bold text-center text-orange-600 mb-6">Зареєструватись</h1>
+        <main className="flex min-h-screen items-center justify-center text-white p-4">
+            <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-2xl border border-gray-700">
+                <h1 className="text-3xl font-bold text-center text-purple-400 mb-6">Зареєструватись</h1>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Ім&#39;я</label>
+                        <label htmlFor="name" className="block text-gray-300 text-sm font-bold mb-2">Ім&#39;я:</label>
                         <input
                             id="name"
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Ваше ім'я"
-                            className="input"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-white border-gray-600 focus:border-purple-500 mb-3"
                             required
                         />
                     </div>
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <label htmlFor="email" className="block text-gray-300 text-sm font-bold mb-2">Електронна пошта:</label>
                         <input
                             id="email"
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="your@example.com"
-                            className="input"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 leading-tight focus:outline-none focus:shadow-outline bg-white border-gray-600 focus:border-purple-500 mb-3"
                             required
                         />
                     </div>
+                    {/* Поле для пароля */}
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
-                        <input
-                            id="password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="********"
-                            className="input"
-                            required
-                        />
+                        <label htmlFor="password" className="block text-gray-300 text-sm font-bold mb-2">Пароль:</label>
+                        <div className="relative">
+                            <input
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="********"
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 pr-10 leading-tight focus:outline-none focus:shadow-outline bg-white border-gray-600 focus:border-purple-500 mb-3"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-900"
+                                style={{ bottom: '12px' }} // Регулювання позиції кнопки
+                            >
+                                <FontAwesomeIcon icon={showPassword ? faEye : faEyeSlash} />
+                            </button>
+                        </div>
+                    </div>
+                    {/* Поле для підтвердження пароля */}
+                    <div>
+                        <label htmlFor="confirmPassword" className="block text-gray-300 text-sm font-bold mb-2">Підтвердіть пароль:</label>
+                        <div className="relative">
+                            <input
+                                id="confirmPassword"
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="********"
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-900 pr-10 leading-tight focus:outline-none focus:shadow-outline bg-white border-gray-600 focus:border-purple-500 mb-3"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-900"
+                                style={{ bottom: '12px' }} // Регулювання позиції кнопки
+                            >
+                                <FontAwesomeIcon icon={showConfirmPassword ? faEye : faEyeSlash} />
+                            </button>
+                        </div>
                     </div>
                     {error && (
-                        <p className="text-red-500 text-sm text-center bg-red-100 p-2 rounded-md border border-red-300">{error}</p>
+                        <div className="bg-red-500 text-white p-3 rounded mb-4 text-center">
+                            {error}
+                        </div>
                     )}
                     {success && (
-                        <p className="text-green-500 text-sm text-center bg-green-100 p-2 rounded-md border border-green-300">{success}</p>
+                        <div className="bg-green-500 text-white p-3 rounded mb-4 text-center">
+                            {success}
+                        </div>
                     )}
                     <button
                         type="submit"
-                        className="btn w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 disabled:opacity-50"
+                        disabled={isLoading}
                     >
-                        Зареєструватись
+                        {isLoading ? 'Реєстрація...' : 'Зареєструватись'}
                     </button>
                 </form>
-                <p className="text-center text-gray-600 mt-4">
-                    Вже маєте аккаунт?{' '}
-                    <Link href="/auth/signin" className="text-blue-500 hover:underline nav-link">
+                <p className="mt-8 text-center text-gray-400">
+                    Вже маєте обліковий запис?{' '}
+                    <Link href="/auth/signin" className="text-blue-400 hover:underline">
                         Увійти
                     </Link>
                 </p>

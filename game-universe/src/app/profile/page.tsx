@@ -1,6 +1,6 @@
 // src/app/profile/page.tsx
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth'; // Імпортуємо authOptions з lib/auth
+import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,7 +8,6 @@ import Link from 'next/link';
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);
 
-    // Якщо користувач не автентифікований, перенаправляємо на сторінку входу
     if (!session || !session.user) {
         redirect('/auth/signin');
     }
@@ -16,7 +15,7 @@ export default async function ProfilePage() {
     const user = session.user;
 
     return (
-        <main className="flex min-h-screen flex-col items-center p-6 bg-gray-900 text-white">
+        <main className="flex min-h-screen flex-col items-center p-6  text-white">
             <div className="w-full max-w-2xl bg-gray-800 p-8 rounded-lg shadow-2xl border border-gray-700 mt-12">
                 <h1 className="text-4xl font-bold text-center text-blue-400 mb-8">Мій Профіль</h1>
 
@@ -48,14 +47,14 @@ export default async function ProfilePage() {
                 <section className="mt-10 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
                     <h3 className="text-2xl font-bold text-green-400 mb-4 text-center">Мої Ігрові Дані</h3>
                     <p className="text-lg text-gray-300 text-center mb-6">
-                        Тут ви можете переглядати та керувати своїм списком бажань, коментарями та іншими ігровими даними.
+                        Тут ви можете переглядати та керувати своїм списком бажань, коментарями.
                     </p>
                     <div className="flex justify-center gap-4">
                         <Link href="/profile/wishlist" className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
-                            Мій Список Бажань (не реалізовано)
+                            Мій Список Бажань
                         </Link>
                         <Link href="/profile/comments" className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
-                            Мої Коментарі (не реалізовано)
+                            Мої Коментарі
                         </Link>
                     </div>
                 </section>

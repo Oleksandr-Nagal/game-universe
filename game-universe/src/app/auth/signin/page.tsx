@@ -71,7 +71,7 @@ export default function SignInPage() {
     }
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-gray-900 text-white p-4">
+        <main className="flex min-h-screen items-center justify-center  text-white p-4">
             <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-2xl border border-gray-700">
                 <h1 className="text-3xl font-bold text-center text-purple-400 mb-6">Увійти</h1>
                 {error && (
@@ -134,7 +134,7 @@ export default function SignInPage() {
                 </div>
 
                 <p className="mt-8 text-center text-gray-400">
-                    Немає облікового запису? <Link href="/auth/register" className="text-blue-400 hover:underline">Зареєструватися</Link> (ще не реалізовано)
+                    Немає облікового запису? <Link href="/auth/register" className="text-blue-400 hover:underline">Зареєструватися</Link>
                 </p>
             </div>
         </main>

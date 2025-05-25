@@ -4,7 +4,6 @@ import type { Configuration as WebpackConfig } from 'webpack';
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
     // Конфігурація Webpack (якщо вона все ще потрібна)
-    // Переконайтеся, що ви встановили @types/webpack, якщо отримуєте помилки TypeScript тут.
     webpack: (config: WebpackConfig) => {
         if (Array.isArray(config.externals)) {
             config.externals.push({
@@ -23,7 +22,6 @@ const nextConfig: NextConfig = {
             {
                 protocol: 'https',
                 hostname: 'upload.wikimedia.org',
-                // pathname: '/wikipedia/en/thumb/b/b9/Elden_Ring_cover_art.jpg/*', // Можна додати для більшої специфічності, але зазвичай не потрібно
             },
             {
                 protocol: 'https',
@@ -44,19 +42,19 @@ const nextConfig: NextConfig = {
             {
                 protocol: 'https',
                 hostname: 'avatars.githubusercontent.com',
-
             },
             {
                 protocol: 'https',
-                hostname: 'kit.fontawesome.com', // Важливо: тільки домен, без шляху ".js"
+                hostname: 'kit.fontawesome.com',
             },
-            // Додайте інші хости, якщо плануєте використовувати зображення з інших джерел
+            { // Додано для Freepik
+                protocol: 'https',
+                hostname: 'img.freepik.com',
+            },
         ],
+        // Дозволяємо завантаження SVG-зображень
+        dangerouslyAllowSVG: true,
     },
-    // Ця секція для overrides має бути додана до package.json, а не next.config.ts
-    // overrides: {
-    //     "@auth/core": "0.28.0"
-    // }
 };
 
 export default nextConfig;

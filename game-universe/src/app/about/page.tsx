@@ -1,7 +1,7 @@
 // src/app/about/page.tsx
 export default function AboutPage() {
     return (
-        <main className="w-full p-6 bg-gray-900 text-white min-h-[calc(100vh-100px)] flex flex-col items-center justify-center">
+        <main className="w-full p-6  text-white min-h-[calc(100vh-100px)] flex flex-col items-center justify-center">
             <div className="container mx-auto bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700 max-w-4xl">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-8 leading-tight drop-shadow-lg text-center">
                     Про GameUniverse

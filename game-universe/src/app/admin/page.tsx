@@ -22,7 +22,7 @@ export default async function AdminPage() {
     const totalComments = await prisma.comment.count();
 
     return (
-        <main className="flex min-h-screen flex-col items-center p-6 bg-gray-900 text-white">
+        <main className="flex min-h-screen flex-col items-center p-6  text-white">
             <div className="w-full max-w-4xl bg-gray-800 p-8 rounded-lg shadow-2xl border border-gray-700 mt-12">
                 <h1 className="text-4xl font-bold text-center text-red-400 mb-8">Admin Dashboard</h1>
                 <p className="text-lg text-gray-300 text-center mb-10">
