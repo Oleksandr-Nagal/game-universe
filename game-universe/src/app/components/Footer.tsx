@@ -11,16 +11,24 @@ import {
 export const Footer = () => (
     <footer className="bg-gray-800 text-white p-6 mt-auto shadow-inner rounded-t-lg">
         <div className="flex justify-center space-x-6 mb-4">
-            <Link href="https://www.facebook.com/yourgameuniverse" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors duration-300">
+            <Link href="https://www.facebook.com/yourgameuniverse" target="_blank" rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                  aria-label="Facebook link"> {/* Додаємо aria-label */}
                 <FontAwesomeIcon icon={faFacebookF} className="text-2xl" />
             </Link>
-            <Link href="https://www.instagram.com/yourgameuniverse" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors duration-300">
+            <Link href="https://www.instagram.com/yourgameuniverse" target="_blank" rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                  aria-label="Instagram link"> {/* Додаємо aria-label */}
                 <FontAwesomeIcon icon={faInstagram} className="text-2xl" />
             </Link>
-            <Link href="https://t.me/yourgameuniverse" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors duration-300">
+            <Link href="https://t.me/yourgameuniverse" target="_blank" rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                  aria-label="Telegram link"> {/* Додаємо aria-label */}
                 <FontAwesomeIcon icon={faTelegramPlane} className="text-2xl" />
             </Link>
-            <Link href="https://www.tiktok.com/@yourgameuniverse" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors duration-300">
+            <Link href="https://www.tiktok.com/@yourgameuniverse" target="_blank" rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                  aria-label="TikTok link"> {/* Додаємо aria-label */}
                 <FontAwesomeIcon icon={faTiktok} className="text-2xl" />
             </Link>
         </div>
