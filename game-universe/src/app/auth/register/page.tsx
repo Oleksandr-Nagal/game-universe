@@ -13,12 +13,12 @@ export default function RegisterPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState(''); // Додано поле для підтвердження пароля
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false); // Стан для відображення/приховування пароля
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Стан для відображення/приховування підтвердження пароля
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -99,7 +99,6 @@ export default function RegisterPage() {
                             required
                         />
                     </div>
-                    {/* Поле для пароля */}
                     <div>
                         <label htmlFor="password" className="block text-gray-300 text-sm font-bold mb-2">Пароль:</label>
                         <div className="relative">
@@ -122,7 +121,6 @@ export default function RegisterPage() {
                             </button>
                         </div>
                     </div>
-                    {/* Поле для підтвердження пароля */}
                     <div>
                         <label htmlFor="confirmPassword" className="block text-gray-300 text-sm font-bold mb-2">Підтвердіть пароль:</label>
                         <div className="relative">

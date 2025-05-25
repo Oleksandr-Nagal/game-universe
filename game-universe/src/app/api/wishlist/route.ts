@@ -17,7 +17,7 @@ export async function GET(request: Request) {
                 userId: session.user.id,
             },
             include: {
-                game: { // Включаємо дані про гру
+                game: {
                     select: {
                         id: true,
                         title: true,
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
                 },
             },
             orderBy: {
-                addedAt: 'desc', // Сортуємо за датою додавання
+                addedAt: 'desc',
             },
         });
 
@@ -38,7 +38,6 @@ export async function GET(request: Request) {
     }
 }
 
-// Add to wishlist
 export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
@@ -80,7 +79,6 @@ export async function POST(request: Request) {
     }
 }
 
-// Remove from wishlist
 export async function DELETE(request: Request) {
     const session = await getServerSession(authOptions);
 
@@ -107,7 +105,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ message: 'Game successfully removed from wishlist.', deletedItem });
     } catch (error: any) {
         console.error('Error deleting from wishlist:', error);
-        if (error.code === 'P2025') { // Prisma error code for record not found
+        if (error.code === 'P2025') {
             return NextResponse.json({ error: 'Game not found in your wishlist.' }, { status: 404 });
         }
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

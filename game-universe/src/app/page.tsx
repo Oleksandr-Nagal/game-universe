@@ -2,27 +2,13 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
-import Image from 'next/image'; // Імпортуємо Image для фонового зображення
+import Image from 'next/image';
 
 export default async function HomePage() {
     const session = await getServerSession(authOptions);
 
     return (
         <main className="relative flex min-h-screen flex-col items-center justify-center p-6 sm:p-12 md:p-24 text-white overflow-hidden">
-            {/* Фонове зображення з напівпрозорим оверлеєм */}
-            {/*<div className="absolute inset-0 z-0">*/}
-            {/*    <Image*/}
-            {/*        src="https://img.freepik.com/free-vector/dark-hexagonal-background-with-gradient-color_79603-1409.jpg?semt=ais_hybrid&w=740" // Замініть на реальне зображення, якщо є*/}
-            {/*        alt="Ігровий фон"*/}
-            {/*        fill*/}
-            {/*        sizes="100vw"*/}
-            {/*        style={{ objectFit: 'cover' }}*/}
-            {/*        className="opacity-50" // Зробить зображення напівпрозорим*/}
-            {/*    />*/}
-            {/*    <div className="absolute inset-0 bg-gray-900 opacity-70"></div> /!* Темний оверлей для кращої читабельності тексту *!/*/}
-            {/*</div>*/}
-
-            {/* Контент сторінки */}
             <div className="relative z-10 flex flex-col items-center justify-center text-center">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 sm:mb-8 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 drop-shadow-lg">
                     Ласкаво просимо до GameUniverse!

@@ -23,7 +23,7 @@ interface Comment {
     id: string;
     content: string;
     createdAt: string;
-    updatedAt: string; // Додано updatedAt
+    updatedAt: string;
     userId: string;
     user: {
         id: string;
@@ -45,8 +45,8 @@ export default function GameDetailPage() {
     const [newCommentContent, setNewCommentContent] = useState('');
     const [commentLoading, setCommentLoading] = useState(false);
     const [commentError, setCommentError] = useState<string | null>(null);
-    const [editingCommentId, setEditingCommentId] = useState<string | null>(null); // Стан для редагування
-    const [editingCommentContent, setEditingCommentContent] = useState(''); // Стан для вмісту редагованого коментаря
+    const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+    const [editingCommentContent, setEditingCommentContent] = useState('');
 
     const fetchGame = useCallback(async () => {
         setLoading(true);
@@ -102,7 +102,7 @@ export default function GameDetailPage() {
     useEffect(() => {
         if (id) {
             fetchGame();
-            fetchComments(); // Fetch comments when game ID is available
+            fetchComments();
         }
     }, [id, fetchGame, fetchComments]);
 
@@ -168,8 +168,7 @@ export default function GameDetailPage() {
 
             if (res.ok) {
                 const addedComment: Comment = await res.json();
-                // Fetch the user data for the newly added comment
-                const userRes = await fetch(`/api/users/${session.user.id}`); // Assuming you have a user API endpoint
+                const userRes = await fetch(`/api/users/${session.user.id}`);
                 const userData = userRes.ok ? await userRes.json() : null;
 
                 setComments(prev => [
@@ -298,7 +297,6 @@ export default function GameDetailPage() {
     return (
         <main className="flex min-h-screen flex-col items-center p-6  text-white">
             <div className="w-full max-w-4xl bg-gray-800/80 p-8 rounded-lg shadow-2xl border border-gray-700 mt-12 backdrop-blur-sm">
-                {/* Додано text-wrap для переносу тексту назви */}
                 <h1 className="text-4xl font-bold text-center text-orange-400 mb-6 break-words">{game.title}</h1>
 
                 {game.imageUrl && (
@@ -316,7 +314,6 @@ export default function GameDetailPage() {
 
                 <div className="mb-6 bg-gray-700/70 p-4 rounded-lg border border-gray-600">
                     <h2 className="text-2xl font-semibold text-white mb-3">Опис гри</h2>
-                    {/* Додано break-words для переносу тексту опису */}
                     <p className="text-gray-300 text-lg leading-relaxed break-words">{game.description}</p>
                 </div>
 
@@ -355,11 +352,9 @@ export default function GameDetailPage() {
                     </p>
                 )}
 
-                {/* Секція коментарів */}
                 <section className="mt-10 p-6 bg-gray-700/70 rounded-lg shadow-inner border border-gray-600 backdrop-blur-sm">
                     <h2 className="text-3xl font-bold text-yellow-300 mb-6 text-center">Коментарі</h2>
 
-                    {/* Форма для додавання коментарів */}
                     {status === 'authenticated' ? (
                         <form onSubmit={handleAddComment} className="mb-8 space-y-4">
                             <textarea
@@ -385,7 +380,6 @@ export default function GameDetailPage() {
                         </p>
                     )}
 
-                    {/* Список коментарів */}
                     {comments.length === 0 ? (
                         <p className="text-center text-gray-400">Ще немає коментарів. Будьте першим!</p>
                     ) : (
@@ -407,9 +401,7 @@ export default function GameDetailPage() {
                                         )}
                                         <p className="font-semibold text-white">{comment.user?.name || comment.user?.id || 'Невідомий користувач'}</p>
                                         <p className="text-gray-500 text-sm ml-auto">
-                                            {/* Відображення дати та часу створення */}
                                             {new Date(comment.createdAt).toLocaleDateString()} о {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            {/* Умовне відображення "(відредаговано)", якщо updatedAt відрізняється від createdAt */}
                                             {comment.createdAt !== comment.updatedAt && (
                                                 <span className="ml-2">(відредаговано)</span>
                                             )}

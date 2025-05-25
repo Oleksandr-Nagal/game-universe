@@ -139,11 +139,9 @@ export default function GamesPage() {
             <div className="w-full max-w-6xl mt-12 mb-12">
                 <h1 className="text-4xl font-bold text-center text-teal-400 mb-10">Наша Колекція Ігор</h1>
 
-                {/* Секція фільтрів */}
                 <div className="bg-gray-800/80 p-6 rounded-lg shadow-xl border border-gray-700 mb-8 backdrop-blur-sm">
                     <h2 className="text-2xl font-bold text-blue-300 mb-4">Фільтри та Пошук</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Пошук за назвою */}
                         <div>
                             <label htmlFor="searchTerm" className="block text-gray-300 text-sm font-bold mb-2">Назва гри:</label>
                             <input
@@ -155,7 +153,6 @@ export default function GamesPage() {
                                 className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-blue-400"
                             />
                         </div>
-                        {/* Пошук за розробником */}
                         <div>
                             <label htmlFor="developerFilter" className="block text-gray-300 text-sm font-bold mb-2">Розробник:</label>
                             <input
@@ -168,7 +165,6 @@ export default function GamesPage() {
                             />
                         </div>
 
-                        {/* Фільтр за датою випуску (від і до) - тепер в одному блоці */}
                         <div className="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="startDateFilter" className="block text-gray-300 text-sm font-bold mb-2">Дата випуску (від):</label>
@@ -192,7 +188,6 @@ export default function GamesPage() {
                             </div>
                         </div>
 
-                        {/* Фільтр за жанрами */}
                         <div className="md:col-span-2 lg:col-span-1">
                             <label className="block text-gray-300 text-sm font-bold mb-2">Жанри:</label>
                             <div className="grid grid-cols-2 gap-2 bg-gray-700 p-3 rounded-lg border border-gray-600 max-h-32 overflow-y-auto">
@@ -214,7 +209,6 @@ export default function GamesPage() {
                             </div>
                         </div>
 
-                        {/* Фільтр за платформами */}
                         <div className="md:col-span-2 lg:col-span-1">
                             <label className="block text-gray-300 text-sm font-bold mb-2">Платформи:</label>
                             <div className="grid grid-cols-2 gap-2 bg-gray-700 p-3 rounded-lg border border-gray-600 max-h-32 overflow-y-auto">
@@ -246,7 +240,6 @@ export default function GamesPage() {
                     </div>
                 </div>
 
-                {/* Список ігор */}
                 {loading ? (
                     <div className="text-center text-lg text-gray-400">Завантаження ігор...</div>
                 ) : error ? (

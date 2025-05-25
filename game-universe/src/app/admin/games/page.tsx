@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// Інтерфейси для даних
 interface Game {
     id: string;
     title: string;
@@ -20,22 +19,21 @@ interface Game {
     platforms: { platform: { name: string } }[];
 }
 
-// Інтерфейс для опцій жанрів/платформ
 interface Option {
     id: string;
     name: string;
 }
 
 interface FormState {
-    id: string | null; // Для редагування
+    id: string | null;
     title: string;
     description: string;
     releaseDate: string;
     imageUrl: string;
     developerName: string;
     publisherName: string;
-    selectedGenreNames: string[]; // Тепер масив рядків для вибраних жанрів
-    selectedPlatformNames: string[]; // Тепер масив рядків для вибраних платформ
+    selectedGenreNames: string[];
+    selectedPlatformNames: string[];
 }
 
 export default function AdminGamesPage() {
@@ -48,7 +46,7 @@ export default function AdminGamesPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
 
-    const [showForm, setShowForm] = useState(false); // Для показу/приховування форми
+    const [showForm, setShowForm] = useState(false);
     const [currentFormState, setCurrentFormState] = useState<FormState>({
         id: null,
         title: '',
@@ -57,26 +55,24 @@ export default function AdminGamesPage() {
         imageUrl: '',
         developerName: '',
         publisherName: '',
-        selectedGenreNames: [], // Ініціалізуємо як порожній масив
-        selectedPlatformNames: [], // Ініціалізуємо як порожній масив
+        selectedGenreNames: [],
+        selectedPlatformNames: [],
     });
 
-    const [allGenres, setAllGenres] = useState<Option[]>([]); // Стан для всіх доступних жанрів
-    const [allPlatforms, setAllPlatforms] = useState<Option[]>([]); // Стан для всіх доступних платформ
+    const [allGenres, setAllGenres] = useState<Option[]>([]);
+    const [allPlatforms, setAllPlatforms] = useState<Option[]>([]);
 
-    // Функція для отримання всіх ігор (для таблиці)
     const fetchGames = useCallback(async () => {
         if (status === 'loading') return;
 
-        // Перевірка ролі адміністратора на клієнті (додатково до серверної)
         if (!session || session.user?.role !== 'ADMIN') {
-            router.push('/'); // Перенаправлення, якщо не адміністратор
+            router.push('/');
             return;
         }
 
         setLoading(true);
         try {
-            const res = await fetch('/api/admin/games'); // Адмінський API для ігор
+            const res = await fetch('/api/admin/games');
             if (!res.ok) {
                 const errorData = await res.json();
                 throw new Error(errorData.error || `Помилка отримання ігор: ${res.statusText}`);
@@ -91,7 +87,6 @@ export default function AdminGamesPage() {
         }
     }, [session, status, router]);
 
-    // Функція для отримання всіх жанрів з API
     const fetchAllGenres = useCallback(async () => {
         try {
             const res = await fetch('/api/genres');
@@ -104,7 +99,6 @@ export default function AdminGamesPage() {
         }
     }, []);
 
-    // Функція для отримання всіх платформ з API
     const fetchAllPlatforms = useCallback(async () => {
         try {
             const res = await fetch('/api/platforms');
@@ -117,20 +111,17 @@ export default function AdminGamesPage() {
         }
     }, []);
 
-    // Завантаження даних при першому рендері
     useEffect(() => {
         fetchGames();
         fetchAllGenres();
         fetchAllPlatforms();
     }, [fetchGames, fetchAllGenres, fetchAllPlatforms]);
 
-    // Обробник зміни текстових полів форми
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setCurrentFormState(prev => ({ ...prev, [name]: value }));
     };
 
-    // Обробник зміни чекбоксів жанрів
     const handleGenreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = e.target;
         setCurrentFormState(prev => {
@@ -141,7 +132,6 @@ export default function AdminGamesPage() {
         });
     };
 
-    // Обробник зміни чекбоксів платформ
     const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = e.target;
         setCurrentFormState(prev => {
@@ -152,7 +142,6 @@ export default function AdminGamesPage() {
         });
     };
 
-    // Обробник відправки форми (додавання/редагування гри)
     const handleAddEditSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormError(null);
@@ -160,7 +149,6 @@ export default function AdminGamesPage() {
 
         const { id, title, description, releaseDate, imageUrl, developerName, publisherName, selectedGenreNames, selectedPlatformNames } = currentFormState;
 
-        // Проста валідація
         if (!title || !description || !releaseDate || !developerName || !publisherName || selectedGenreNames.length === 0 || selectedPlatformNames.length === 0) {
             setFormError('Будь ласка, заповніть усі обов\'язкові поля (включаючи вибір жанрів та платформ).');
             setIsSubmitting(false);
@@ -181,8 +169,8 @@ export default function AdminGamesPage() {
                     imageUrl,
                     developerName,
                     publisherName,
-                    genreNames: selectedGenreNames, // Передаємо масив назв жанрів
-                    platformNames: selectedPlatformNames, // Передаємо масив назв платформ
+                    genreNames: selectedGenreNames,
+                    platformNames: selectedPlatformNames,
                 }),
             });
 
@@ -190,7 +178,7 @@ export default function AdminGamesPage() {
                 alert(`Гру успішно ${id ? 'оновлено' : 'додано'}!`);
                 setShowForm(false);
                 resetForm();
-                fetchGames(); // Оновити список ігор
+                fetchGames();
             } else {
                 const errorData = await res.json();
                 setFormError(errorData.error || `Не вдалося ${id ? 'оновити' : 'додати'} гру.`);
@@ -203,23 +191,21 @@ export default function AdminGamesPage() {
         }
     };
 
-    // Обробник натискання кнопки "Редагувати"
     const handleEditClick = (game: Game) => {
         setCurrentFormState({
             id: game.id,
             title: game.title,
             description: game.description,
-            releaseDate: new Date(game.releaseDate).toISOString().split('T')[0], // Форматуємо для input type="date"
+            releaseDate: new Date(game.releaseDate).toISOString().split('T')[0],
             imageUrl: game.imageUrl || '',
             developerName: game.developer?.name || '',
             publisherName: game.publisher?.name || '',
-            selectedGenreNames: game.genres.map(g => g.genre.name), // Витягуємо назви жанрів в масив
-            selectedPlatformNames: game.platforms.map(p => p.platform.name), // Витягуємо назви платформ в масив
+            selectedGenreNames: game.genres.map(g => g.genre.name),
+            selectedPlatformNames: game.platforms.map(p => p.platform.name),
         });
         setShowForm(true);
     };
 
-    // Обробник видалення гри
     const handleDeleteGame = async (gameId: string) => {
         if (!confirm('Ви впевнені, що хочете видалити цю гру? Цю дію не можна скасувати.')) {
             return;
@@ -233,7 +219,7 @@ export default function AdminGamesPage() {
 
             if (res.ok) {
                 alert('Гру успішно видалено.');
-                fetchGames(); // Оновити список ігор
+                fetchGames();
             } else {
                 const errorData = await res.json();
                 alert(`Помилка видалення: ${errorData.error || res.statusText}`);
@@ -246,7 +232,6 @@ export default function AdminGamesPage() {
         }
     };
 
-    // Скидання форми до початкового стану
     const resetForm = () => {
         setCurrentFormState({
             id: null,
@@ -262,7 +247,6 @@ export default function AdminGamesPage() {
         setFormError(null);
     };
 
-    // Відображення стану завантаження
     if (status === 'loading' || loading) {
         return (
             <div className="flex min-h-screen items-center justify-center text-white">
@@ -271,12 +255,10 @@ export default function AdminGamesPage() {
         );
     }
 
-    // Перенаправлення, якщо користувач не адміністратор
     if (!session || session.user?.role !== 'ADMIN') {
-        return null; // Вже перенаправлено через useEffect
+        return null;
     }
 
-    // Відображення помилки, якщо вона виникла
     if (error) {
         return (
             <div className="flex min-h-screen items-center justify-center text-white">
@@ -322,7 +304,7 @@ export default function AdminGamesPage() {
                                     value={currentFormState.title}
                                     onChange={handleFormChange}
                                     className="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400"
-                                    maxLength={100} // Обмеження довжини назви
+                                    maxLength={100}
                                     required
                                 />
                             </div>
@@ -344,10 +326,8 @@ export default function AdminGamesPage() {
                             </div>
                             <div>
                                 <label htmlFor="publisherName" className="block text-gray-300 text-sm font-bold mb-2">Видавець:</label>
-                                {/* Змінено bg-white на bg-gray-800 */}
                                 <input type="text" id="publisherName" name="publisherName" value={currentFormState.publisherName} onChange={handleFormChange} className="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400" required />
                             </div>
-                            {/* Селектори жанрів (чекбокси) */}
                             <div className="md:col-span-2">
                                 <label className="block text-gray-300 text-sm font-bold mb-2">Жанри:</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gray-800 p-3 rounded-lg border border-gray-600 max-h-40 overflow-y-auto">
@@ -368,7 +348,6 @@ export default function AdminGamesPage() {
                                     ))}
                                 </div>
                             </div>
-                            {/* Селектори платформ (чекбокси) */}
                             <div className="md:col-span-2">
                                 <label className="block text-gray-300 text-sm font-bold mb-2">Платформи:</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gray-800 p-3 rounded-lg border border-gray-600 max-h-40 overflow-y-auto">
@@ -442,7 +421,6 @@ export default function AdminGamesPage() {
                                             />
                                         )}
                                     </td>
-                                    {/* Змінено, щоб уникнути зайвих пробілів */}
                                     <td className="py-3 px-4 text-gray-300 font-semibold max-w-xs truncate">{game.title}</td><td className="py-3 px-4 text-gray-300">{game.developer?.name || 'N/A'}</td><td className="py-3 px-4 text-gray-300">{game.publisher?.name || 'N/A'}</td><td className="py-3 px-4 flex space-x-2">
                                     <button
                                         onClick={() => handleEditClick(game)}

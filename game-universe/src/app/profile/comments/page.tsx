@@ -36,7 +36,6 @@ export default function UserCommentsPage() {
         const fetchComments = async () => {
             try {
                 setLoading(true);
-                // Fetch comments for the current user
                 const res = await fetch(`/api/comments?userId=${session.user.id}`);
                 if (!res.ok) {
                     throw new Error(`Failed to fetch comments: ${res.statusText}`);

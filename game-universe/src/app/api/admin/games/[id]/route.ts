@@ -53,7 +53,7 @@ export async function PATCH(
                 title: title || undefined,
                 description: description || undefined,
                 releaseDate: releaseDate ? new Date(releaseDate) : undefined,
-                imageUrl: imageUrl === '' ? null : imageUrl || undefined, // Дозволяє очистити URL зображення
+                imageUrl: imageUrl === '' ? null : imageUrl || undefined,
                 developerId: developerId,
                 publisherId: publisherId,
                 genres: genreNames ? {

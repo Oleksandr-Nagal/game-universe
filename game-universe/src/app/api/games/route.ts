@@ -19,7 +19,7 @@ export async function GET(request: Request) {
         if (title) {
             where.title = {
                 contains: title,
-                mode: 'insensitive', // Для пошуку без урахування регістру
+                mode: 'insensitive',
             };
         }
 
@@ -38,7 +38,6 @@ export async function GET(request: Request) {
                 where.releaseDate.gte = new Date(startDate);
             }
             if (endDate) {
-                // Додаємо 1 день до кінцевої дати, щоб включити весь день
                 const end = new Date(endDate);
                 end.setDate(end.getDate() + 1);
                 where.releaseDate.lt = end;
@@ -50,7 +49,7 @@ export async function GET(request: Request) {
                 some: {
                     genre: {
                         name: {
-                            in: genres, // Пошук ігор, що належать до будь-якого з вибраних жанрів
+                            in: genres,
                         },
                     },
                 },
@@ -62,7 +61,7 @@ export async function GET(request: Request) {
                 some: {
                     platform: {
                         name: {
-                            in: platforms, // Пошук ігор, що доступні на будь-якій з вибраних платформ
+                            in: platforms,
                         },
                     },
                 },

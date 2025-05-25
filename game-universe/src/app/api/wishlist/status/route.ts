@@ -8,7 +8,6 @@ export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.id) {
-        // If not authenticated, they can't have a wishlist item
         return NextResponse.json({ isInWishlist: false }, { status: 200 });
     }
 

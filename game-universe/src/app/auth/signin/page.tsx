@@ -2,14 +2,14 @@
 'use client';
 
 import { signIn, useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation'; // Додано useSearchParams
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export default function SignInPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const searchParams = useSearchParams(); // Отримуємо параметри URL
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -17,29 +17,27 @@ export default function SignInPage() {
 
     useEffect(() => {
         if (status === 'authenticated') {
-            router.push('/'); // Перенаправлення на домашню сторінку або дашборд, якщо користувач вже увійшов
+            router.push('/');
         }
     }, [status, router]);
 
     useEffect(() => {
-        // Перевіряємо наявність параметра 'error' у URL
         const authError = searchParams.get('error');
         if (authError === 'OAuthAccountNotLinked') {
             setError('Обліковий запис з такою електронною поштою вже існує, але він пов\'язаний з іншим способом входу. Будь ласка, увійдіть за допомогою свого початкового методу або зверніться до підтримки.');
         } else if (authError) {
-            // Обробка інших можливих помилок NextAuth.js
             setError(`Помилка входу: ${authError.replace(/([A-Z])/g, ' $1').trim()}.`);
         }
-    }, [searchParams]); // Залежність від searchParams
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(''); // Очищаємо попередні помилки
+        setError('');
         setIsLoading(true);
 
         try {
             const result = await signIn('credentials', {
-                redirect: false, // Запобігає перенаправленню NextAuth.js
+                redirect: false,
                 email,
                 password,
             });
@@ -47,8 +45,7 @@ export default function SignInPage() {
             if (result?.error) {
                 setError(result.error);
             } else if (result?.ok) {
-                // Успіх, NextAuth.js автоматично оновить сесію
-                router.push('/'); // Або на дашборд
+                router.push('/');
             }
         } catch (err) {
             setError('Виникла неочікувана помилка.');
@@ -67,7 +64,7 @@ export default function SignInPage() {
     }
 
     if (status === 'authenticated') {
-        return null; // Має перенаправити через useEffect
+        return null;
     }
 
     return (
