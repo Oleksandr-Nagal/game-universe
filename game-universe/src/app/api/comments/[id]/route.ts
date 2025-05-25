@@ -4,10 +4,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-// PATCH /api/comments/[id] - Update a comment
 export async function PATCH(
     request: Request,
-    context: { params: { id: string } } // Використовуємо 'context' для доступу до params
+    context: { params: { id: string } }
 ) {
     const session = await getServerSession(authOptions);
 
@@ -15,7 +14,13 @@ export async function PATCH(
         return NextResponse.json({ error: 'Authentication required to update a comment.' }, { status: 401 });
     }
 
-    const commentIdToUpdate = context.params.id;
+    const url = new URL(request.url);
+    const commentIdToUpdate = url.pathname.split('/').pop();
+
+    if (!commentIdToUpdate) {
+        return NextResponse.json({ error: 'Comment ID is missing.' }, { status: 400 });
+    }
+
     const { content } = await request.json();
 
     if (!content || typeof content !== 'string' || content.trim() === '') {
@@ -31,7 +36,6 @@ export async function PATCH(
             return NextResponse.json({ error: 'Comment not found.' }, { status: 404 });
         }
 
-        // Ensure only the owner or an admin can update the comment
         if (comment.userId !== session.user.id && session.user.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Unauthorized to update this comment.' }, { status: 403 });
         }
@@ -51,7 +55,6 @@ export async function PATCH(
     }
 }
 
-// DELETE /api/comments/[id] - Delete a comment
 export async function DELETE(
     request: Request,
     context: { params: { id: string } }
@@ -62,7 +65,12 @@ export async function DELETE(
         return NextResponse.json({ error: 'Authentication required to delete a comment.' }, { status: 401 });
     }
 
-    const commentIdToDelete = context.params.id;
+    const url = new URL(request.url);
+    const commentIdToDelete = url.pathname.split('/').pop();
+
+    if (!commentIdToDelete) {
+        return NextResponse.json({ error: 'Comment ID is missing.' }, { status: 400 });
+    }
 
     try {
         const comment = await prisma.comment.findUnique({
@@ -73,7 +81,6 @@ export async function DELETE(
             return NextResponse.json({ error: 'Comment not found.' }, { status: 404 });
         }
 
-        // Ensure only the owner or an admin can delete the comment
         if (comment.userId !== session.user.id && session.user.role !== 'ADMIN') {
             return NextResponse.json({ error: 'Unauthorized to delete this comment.' }, { status: 403 });
         }

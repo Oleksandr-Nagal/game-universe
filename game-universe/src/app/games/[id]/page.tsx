@@ -245,7 +245,7 @@ export default function GameDetailPage() {
     };
 
     const handleDeleteComment = async (commentId: string) => {
-        if (!confirm('Ви впевнені, що хочете видалити цей коментар?')) {
+        if (!confirm('Ви впевнені, що хочете видалити цей коментар? Цю дію не можна скасувати.')) {
             return;
         }
 
@@ -273,7 +273,7 @@ export default function GameDetailPage() {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
+            <div className="flex min-h-screen items-center justify-center text-white">
                 Завантаження деталей гри...
             </div>
         );
@@ -281,7 +281,7 @@ export default function GameDetailPage() {
 
     if (error) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
+            <div className="flex min-h-screen items-center justify-center text-white">
                 <p className="text-red-500 text-xl">Помилка: {error}</p>
             </div>
         );
@@ -289,7 +289,7 @@ export default function GameDetailPage() {
 
     if (!game) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white">
+            <div className="flex min-h-screen items-center justify-center text-white">
                 <p className="text-yellow-500 text-xl">Гру не знайдено.</p>
             </div>
         );
@@ -297,8 +297,9 @@ export default function GameDetailPage() {
 
     return (
         <main className="flex min-h-screen flex-col items-center p-6  text-white">
-            <div className="w-full max-w-4xl bg-gray-800 p-8 rounded-lg shadow-2xl border border-gray-700 mt-12">
-                <h1 className="text-4xl font-bold text-center text-orange-400 mb-6">{game.title}</h1>
+            <div className="w-full max-w-4xl bg-gray-800/80 p-8 rounded-lg shadow-2xl border border-gray-700 mt-12 backdrop-blur-sm">
+                {/* Додано text-wrap для переносу тексту назви */}
+                <h1 className="text-4xl font-bold text-center text-orange-400 mb-6 break-words">{game.title}</h1>
 
                 {game.imageUrl && (
                     <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-lg">
@@ -313,11 +314,13 @@ export default function GameDetailPage() {
                     </div>
                 )}
 
-                <div className="mb-6">
-                    <p className="text-gray-300 text-lg leading-relaxed">{game.description}</p>
+                <div className="mb-6 bg-gray-700/70 p-4 rounded-lg border border-gray-600">
+                    <h2 className="text-2xl font-semibold text-white mb-3">Опис гри</h2>
+                    {/* Додано break-words для переносу тексту опису */}
+                    <p className="text-gray-300 text-lg leading-relaxed break-words">{game.description}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg mb-8 bg-gray-700/70 p-4 rounded-lg border border-gray-600">
                     <p className="text-gray-400"><span className="font-semibold text-white">Дата випуску:</span> {new Date(game.releaseDate).toLocaleDateString()}</p>
                     {game.developer && <p className="text-gray-400"><span className="font-semibold text-white">Розробник:</span> {game.developer.name}</p>}
                     {game.publisher && <p className="text-gray-400"><span className="font-semibold text-white">Видавець:</span> {game.publisher.name}</p>}
@@ -353,7 +356,7 @@ export default function GameDetailPage() {
                 )}
 
                 {/* Секція коментарів */}
-                <section className="mt-10 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
+                <section className="mt-10 p-6 bg-gray-700/70 rounded-lg shadow-inner border border-gray-600 backdrop-blur-sm">
                     <h2 className="text-3xl font-bold text-yellow-300 mb-6 text-center">Коментарі</h2>
 
                     {/* Форма для додавання коментарів */}
@@ -364,7 +367,7 @@ export default function GameDetailPage() {
                                 onChange={(e) => setNewCommentContent(e.target.value)}
                                 placeholder="Напишіть свій коментар..."
                                 rows={4}
-                                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400"
+                                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400 min-h-[100px] resize-y"
                                 disabled={commentLoading}
                             ></textarea>
                             {commentError && <p className="text-red-400 text-sm">{commentError}</p>}
@@ -404,7 +407,9 @@ export default function GameDetailPage() {
                                         )}
                                         <p className="font-semibold text-white">{comment.user?.name || comment.user?.id || 'Невідомий користувач'}</p>
                                         <p className="text-gray-500 text-sm ml-auto">
-                                            {new Date(comment.createdAt).toLocaleDateString()}
+                                            {/* Відображення дати та часу створення */}
+                                            {new Date(comment.createdAt).toLocaleDateString()} о {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {/* Умовне відображення "(відредаговано)", якщо updatedAt відрізняється від createdAt */}
                                             {comment.createdAt !== comment.updatedAt && (
                                                 <span className="ml-2">(відредаговано)</span>
                                             )}
@@ -416,7 +421,7 @@ export default function GameDetailPage() {
                                                 value={editingCommentContent}
                                                 onChange={(e) => setEditingCommentContent(e.target.value)}
                                                 rows={3}
-                                                className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-500 focus:outline-none focus:border-blue-400"
+                                                className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-500 focus:outline-none focus:border-blue-400 min-h-[80px] resize-y"
                                                 disabled={commentLoading}
                                             ></textarea>
                                             <div className="flex justify-end space-x-2">

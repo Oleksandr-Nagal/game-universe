@@ -3,7 +3,6 @@ import type { Configuration as WebpackConfig } from 'webpack';
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
-    // Конфігурація Webpack (якщо вона все ще потрібна)
     webpack: (config: WebpackConfig) => {
         if (Array.isArray(config.externals)) {
             config.externals.push({
@@ -47,12 +46,11 @@ const nextConfig: NextConfig = {
                 protocol: 'https',
                 hostname: 'kit.fontawesome.com',
             },
-            { // Додано для Freepik
+            {
                 protocol: 'https',
                 hostname: 'img.freepik.com',
             },
         ],
-        // Дозволяємо завантаження SVG-зображень
         dangerouslyAllowSVG: true,
     },
 };
