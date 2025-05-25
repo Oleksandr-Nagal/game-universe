@@ -38,6 +38,10 @@ export default function UserWishlistPage() {
         const fetchWishlist = async () => {
             try {
                 setLoading(true);
+                // Зауваження: Ваш API для списку бажань має повертати дані для поточного користувача.
+                // Якщо API `/api/wishlist` вже фільтрує за користувачем з сесії,
+                // то додатковий `userId` не потрібен. В іншому випадку, можливо, доведеться додати `?userId=${session.user.id}`
+                // або обробляти це на сервері через сесію.
                 const res = await fetch(`/api/wishlist`);
                 if (!res.ok) {
                     throw new Error(`Failed to fetch wishlist: ${res.statusText}`);
@@ -125,7 +129,14 @@ export default function UserWishlistPage() {
                                     <Link href={`/games/${item.game.id}`} className="text-xl font-semibold text-purple-300 hover:underline">
                                         {item.game.title}
                                     </Link>
-                                    <p className="text-gray-400 text-sm mt-1">Додано: {new Date(item.addedAt).toLocaleDateString()}</p>
+                                    <p className="text-gray-400 text-sm mt-1">
+                                        Додано:{' '}
+                                        {new Date(item.addedAt).toLocaleDateString()}{' '}
+                                        {new Date(item.addedAt).toLocaleTimeString([], {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })}
+                                    </p>
                                     <p className="text-gray-500 text-xs line-clamp-2">{item.game.description}</p>
                                     <button
                                         onClick={() => handleRemoveFromWishlist(item.gameId)}

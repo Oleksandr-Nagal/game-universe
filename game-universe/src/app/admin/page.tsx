@@ -16,9 +16,20 @@ export default async function AdminPage() {
         redirect('/');
     }
 
-    const totalUsers = await prisma.user.count();
-    const totalGames = await prisma.game.count();
-    const totalComments = await prisma.comment.count();
+    let totalUsers = 0;
+    let totalGames = 0;
+    let totalComments = 0;
+
+    try {
+        totalUsers = await prisma.user.count();
+        totalGames = await prisma.game.count();
+        totalComments = await prisma.comment.count();
+    } catch (error) {
+        console.error('Помилка завантаження даних для панелі адміністратора:', error);
+        // Можна перенаправити на сторінку помилки: redirect('/error');
+        // Або показати повідомлення про помилку на сторінці
+        // Тут ми просто залишаємо значення 0
+    }
 
     return (
         <main className="flex min-h-screen flex-col items-center p-6 text-white">

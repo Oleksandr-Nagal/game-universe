@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AvatarEditor } from '../components/AvatarEditor';
 
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);
@@ -43,6 +44,8 @@ export default async function ProfilePage() {
                         </p>
                     )}
                 </div>
+
+                <AvatarEditor currentImage={user.image ?? null} />
 
                 <section className="mt-10 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
                     <h3 className="text-2xl font-bold text-green-400 mb-4 text-center">Мої Ігрові Дані</h3>

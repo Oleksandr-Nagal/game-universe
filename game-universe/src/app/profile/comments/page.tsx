@@ -123,7 +123,12 @@ export default function UserCommentsPage() {
                                     {comment.content}
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                    Опубліковано: {new Date(comment.createdAt).toLocaleDateString()}
+                                    Опубліковано:{' '}
+                                    {new Date(comment.createdAt).toLocaleDateString()}{' '}
+                                    {new Date(comment.createdAt).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })}
                                 </p>
                             </div>
                         ))}
