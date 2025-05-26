@@ -1,4 +1,3 @@
-// src/app/api/admin/games/[id]/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -6,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
     request: Request,
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(authOptions);
 
@@ -14,7 +13,10 @@ export async function PATCH(
         return NextResponse.json({ error: 'Доступ заборонено. Потрібні права адміністратора.' }, { status: 403 });
     }
 
-    const gameIdToUpdate = context.params.id;
+    // Очікуємо Promise для params
+    const resolvedParams = await params;
+    const gameIdToUpdate = resolvedParams.id;
+
     const {
         title,
         description,
@@ -99,7 +101,8 @@ export async function PATCH(
 
 export async function DELETE(
     request: Request,
-    context: { params: { id: string } }
+    // Змінюємо тип context, щоб явно вказати, що params може бути Promise
+    { params }: { params: Promise<{ id: string }> } // <-- Змінено тут
 ) {
     const session = await getServerSession(authOptions);
 
@@ -107,7 +110,9 @@ export async function DELETE(
         return NextResponse.json({ error: 'Доступ заборонено. Потрібні права адміністратора.' }, { status: 403 });
     }
 
-    const gameIdToDelete = context.params.id;
+    // Очікуємо Promise для params
+    const resolvedParams = await params;
+    const gameIdToDelete = resolvedParams.id;
 
     try {
         const existingGame = await prisma.game.findUnique({
