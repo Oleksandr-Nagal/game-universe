@@ -5,8 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(
-    request: Request,
-    context: { params: { id: string } }
+    request: Request
 ) {
     const session = await getServerSession(authOptions);
 
@@ -51,8 +50,7 @@ export async function GET(
 
 
 export async function DELETE(
-    request: Request,
-    context: { params: { id: string } }
+    request: Request
 ) {
     const session = await getServerSession(authOptions);
 

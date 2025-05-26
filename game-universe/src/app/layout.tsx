@@ -1,17 +1,16 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css"; // Переконайтеся, що ви імпортуєте глобальні стилі
-import { Providers } from "./components/providers"; // Ваш Providers компонент для NextAuth
-import Image from 'next/image'; // Імпортуємо Image компонент
-import { Header } from './components/Header'; // Імпортуємо Header
-import { Footer } from './components/Footer'; // Імпортуємо Footer
-import React from "react"; // React потрібен для JSX
+import "./globals.css";
+import { Providers } from "./components/providers";
+import Image from 'next/image';
+import { Header } from './components/Header';
+import { Footer } from './components/Footer';
+import React from "react";
 
-// Конфігурація Font Awesome
 import { config } from '@fortawesome/fontawesome-svg-core';
-import '@fortawesome/fontawesome-svg-core/styles.css'; // Імпорт CSS стилів
-config.autoAddCss = false; // Запобігає автоматичному додаванню CSS Font Awesome
+import '@fortawesome/fontawesome-svg-core/styles.css';
+config.autoAddCss = false;
 
 const inter = Inter({ subsets: ["latin"] });
 

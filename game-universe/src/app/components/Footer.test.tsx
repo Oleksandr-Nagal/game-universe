@@ -1,10 +1,9 @@
 // src/app/components/Footer.test.tsx
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Footer } from './Footer'; // Імпортуємо компонент Footer
+import { Footer } from './Footer';
 
-// Мокуємо FontAwesomeIcon. Тепер він може просто повертати порожній div,
-// оскільки ми будемо шукати Link за aria-label.
+
 jest.mock('@fortawesome/react-fontawesome', () => ({
     FontAwesomeIcon: jest.fn(() => <div />),
 }));
@@ -13,7 +12,6 @@ describe('Footer', () => {
     it('renders social media links with accessible names', () => {
         render(<Footer />);
 
-        // Шукаємо посилання за їх aria-label
         const facebookLink = screen.getByRole('link', { name: /Facebook link/i });
         expect(facebookLink).toBeInTheDocument();
         expect(facebookLink).toHaveAttribute('href', 'https://www.facebook.com/yourgameuniverse');

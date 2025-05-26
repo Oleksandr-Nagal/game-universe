@@ -1,6 +1,6 @@
-// src/app/api/games/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client'; // імпортуємо типи
 
 export async function GET(request: Request) {
     try {
@@ -10,11 +10,10 @@ export async function GET(request: Request) {
         const developer = searchParams.get('developer');
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
-        // Отримуємо масиви жанрів та платформ
         const genres = searchParams.getAll('genres');
         const platforms = searchParams.getAll('platforms');
 
-        const where: any = {};
+        const where: Prisma.GameWhereInput = {}; // ✅ типізовано
 
         if (title) {
             where.title = {

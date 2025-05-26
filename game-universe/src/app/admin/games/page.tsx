@@ -1,7 +1,7 @@
 // src/app/admin/games/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -75,13 +75,20 @@ export default function AdminGamesPage() {
             const res = await fetch('/api/admin/games');
             if (!res.ok) {
                 const errorData = await res.json();
-                throw new Error(errorData.error || `Помилка отримання ігор: ${res.statusText}`);
+                setError(errorData.error || `Помилка отримання ігор: ${res.statusText}`);
+                console.error('Error fetching games:', errorData);
+                return;
             }
             const data: Game[] = await res.json();
             setGames(data);
-        } catch (err: any) {
-            setError(err.message || 'Виникла неочікувана помилка при завантаженні ігор.');
-            console.error('Error fetching games:', err);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+                console.error('Error fetching games:', err.message);
+            } else {
+                setError('Виникла неочікувана помилка при завантаженні ігор.');
+                console.error('Error fetching games:', err);
+            }
         } finally {
             setLoading(false);
         }
@@ -90,11 +97,20 @@ export default function AdminGamesPage() {
     const fetchAllGenres = useCallback(async () => {
         try {
             const res = await fetch('/api/genres');
-            if (!res.ok) throw new Error('Failed to fetch genres.');
+            if (!res.ok) {
+                const errorMsg = 'Failed to fetch genres.';
+                console.error(errorMsg);
+                setFormError('Не вдалося завантажити список жанрів.');
+                return;  // Вихід без throw
+            }
             const data: Option[] = await res.json();
             setAllGenres(data);
-        } catch (err: any) {
-            console.error('Error fetching genres:', err);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error('Error fetching genres:', err.message);
+            } else {
+                console.error('Error fetching genres:', err);
+            }
             setFormError('Не вдалося завантажити список жанрів.');
         }
     }, []);
@@ -102,20 +118,37 @@ export default function AdminGamesPage() {
     const fetchAllPlatforms = useCallback(async () => {
         try {
             const res = await fetch('/api/platforms');
-            if (!res.ok) throw new Error('Failed to fetch platforms.');
+            if (!res.ok) {
+                const errorMsg = 'Failed to fetch platforms.';
+                console.error(errorMsg);
+                setFormError('Не вдалося завантажити список платформ.');
+                return;  // Вихід без throw
+            }
             const data: Option[] = await res.json();
             setAllPlatforms(data);
-        } catch (err: any) {
-            console.error('Error fetching platforms:', err);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error('Error fetching platforms:', err.message);
+            } else {
+                console.error('Error fetching platforms:', err);
+            }
             setFormError('Не вдалося завантажити список платформ.');
         }
     }, []);
 
+
     useEffect(() => {
-        fetchGames();
-        fetchAllGenres();
-        fetchAllPlatforms();
+        const fetchData = async () => {
+            await fetchGames();
+            await fetchAllGenres();
+            await fetchAllPlatforms();
+        };
+
+        fetchData().catch(err => {
+            console.error('Error in fetchData:', err);
+        });
     }, [fetchGames, fetchAllGenres, fetchAllPlatforms]);
+
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -178,7 +211,7 @@ export default function AdminGamesPage() {
                 alert(`Гру успішно ${id ? 'оновлено' : 'додано'}!`);
                 setShowForm(false);
                 resetForm();
-                fetchGames();
+                await fetchGames();
             } else {
                 const errorData = await res.json();
                 setFormError(errorData.error || `Не вдалося ${id ? 'оновити' : 'додати'} гру.`);
@@ -219,7 +252,7 @@ export default function AdminGamesPage() {
 
             if (res.ok) {
                 alert('Гру успішно видалено.');
-                fetchGames();
+                await fetchGames();
             } else {
                 const errorData = await res.json();
                 alert(`Помилка видалення: ${errorData.error || res.statusText}`);
@@ -318,7 +351,7 @@ export default function AdminGamesPage() {
                             </div>
                             <div>
                                 <label htmlFor="imageUrl" className="block text-gray-300 text-sm font-bold mb-2">URL зображення:</label>
-                                <input type="text" id="imageUrl" name="imageUrl" value={currentFormState.imageUrl} onChange={handleFormChange} placeholder="http://example.com/image.jpg (необов'язково)" className="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400" />
+                                <input type="text" id="imageUrl" name="imageUrl" value={currentFormState.imageUrl} onChange={handleFormChange} placeholder="https://example.com/image.jpg (необов'язково)" className="w-full p-2 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400" />
                             </div>
                             <div>
                                 <label htmlFor="developerName" className="block text-gray-300 text-sm font-bold mb-2">Розробник:</label>

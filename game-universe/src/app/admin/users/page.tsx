@@ -41,8 +41,12 @@ export default function AdminUsersPage() {
             }
             const data: User[] = await res.json();
             setUsers(data);
-        } catch (err: any) {
-            setError(err.message || 'Виникла неочікувана помилка при завантаженні користувачів.');
+        } catch (err: unknown) {
+            const errorMessage =
+                err instanceof Error
+                    ? err.message
+                    : 'Виникла неочікувана помилка при завантаженні користувачів.';
+            setError(errorMessage);
             console.error('Error fetching users:', err);
         } finally {
             setLoading(false);
@@ -50,7 +54,10 @@ export default function AdminUsersPage() {
     }, [session, status, router]);
 
     useEffect(() => {
-        fetchUsers();
+        const fetchData = async () => {
+            await fetchUsers();
+        };
+        fetchData();
     }, [fetchUsers]);
 
     const handleDeleteUser = async (userId: string) => {
@@ -112,7 +119,7 @@ export default function AdminUsersPage() {
                             <thead>
                             <tr className="bg-gray-600/70">
                                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-200">Аватар</th>
-                                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-200">Ім'я</th>
+                                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-200">Ім&nbsp;&rsquo;я</th>
                                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-200">Email</th>
                                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-200">Роль</th>
                                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-200">Зареєстрований</th>

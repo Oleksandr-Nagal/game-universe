@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request) {
+export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user?.id) {
@@ -103,11 +103,16 @@ export async function DELETE(request: Request) {
         });
 
         return NextResponse.json({ message: 'Game successfully removed from wishlist.', deletedItem });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error deleting from wishlist:', error);
-        if (error.code === 'P2025') {
-            return NextResponse.json({ error: 'Game not found in your wishlist.' }, { status: 404 });
+
+        if (typeof error === 'object' && error !== null && 'code' in error) {
+            const errWithCode = error as { code?: string };
+            if (errWithCode.code === 'P2025') {
+                return NextResponse.json({ error: 'Game not found in your wishlist.' }, { status: 404 });
+            }
         }
+
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

@@ -44,22 +44,33 @@ export default function AdminCommentsPage() {
         setLoading(true);
         try {
             const res = await fetch('/api/admin/comments');
+            const errorData = !res.ok ? await res.json() : null;
+
             if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || `Помилка отримання коментарів: ${res.statusText}`);
+                const message = errorData?.error || `Помилка отримання коментарів: ${res.statusText}`;
+                setError(message);
+                console.error('Error fetching comments:', message);
+                return;
             }
+
             const data: Comment[] = await res.json();
             setComments(data);
-        } catch (err: any) {
-            setError(err.message || 'Виникла неочікувана помилка при завантаженні коментарів.');
-            console.error('Error fetching comments:', err);
-        } finally {
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+                console.error('Error fetching comments:', err.message);
+            } else {
+                setError('Виникла неочікувана помилка при завантаженні коментарів.');
+                console.error('Error fetching comments:', err);
+            }
+        }
+        finally {
             setLoading(false);
         }
     }, [session, status, router]);
 
     useEffect(() => {
-        fetchComments();
+        void fetchComments();
     }, [fetchComments]);
 
     const handleDeleteComment = async (commentId: string) => {

@@ -11,9 +11,7 @@ export default async function ProfilePage() {
 
     if (!session || !session.user) {
         redirect('/auth/signin');
-        return null; // Зупиняємо рендеринг
     }
-
 
     const user = session.user;
 

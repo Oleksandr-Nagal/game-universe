@@ -1,11 +1,11 @@
-// src/app/games/page.tsx
-'use client'; // Цей компонент тепер є клієнтським
+//game-universe/src/app/games/page.tsx
+'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-// Інтерфейси для даних
 interface Game {
     id: string;
     title: string;
@@ -23,7 +23,6 @@ interface Option {
     name: string;
 }
 
-// Функція для скорочення тексту
 const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) {
         return text;
@@ -36,7 +35,6 @@ export default function GamesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Стан для фільтрів
     const [searchTerm, setSearchTerm] = useState('');
     const [developerFilter, setDeveloperFilter] = useState('');
     const [startDateFilter, setStartDateFilter] = useState('');
@@ -44,11 +42,9 @@ export default function GamesPage() {
     const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
     const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
 
-    // Стан для доступних опцій фільтрів
     const [allGenres, setAllGenres] = useState<Option[]>([]);
     const [allPlatforms, setAllPlatforms] = useState<Option[]>([]);
 
-    // Функція для отримання ігор з API з урахуванням фільтрів
     const fetchGames = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -58,70 +54,93 @@ export default function GamesPage() {
         if (developerFilter) queryParams.append('developer', developerFilter);
         if (startDateFilter) queryParams.append('startDate', startDateFilter);
         if (endDateFilter) queryParams.append('endDate', endDateFilter);
-        selectedGenres.forEach(genre => queryParams.append('genres', genre));
-        selectedPlatforms.forEach(platform => queryParams.append('platforms', platform));
+        selectedGenres.forEach((genre) => queryParams.append('genres', genre));
+        selectedPlatforms.forEach((platform) => queryParams.append('platforms', platform));
 
         try {
             const res = await fetch(`/api/games?${queryParams.toString()}`);
             if (!res.ok) {
-                throw new Error(`Failed to fetch games: ${res.statusText}`);
+                // Замість throw — встановлюємо помилку і повертаємо
+                const errorMsg = `Failed to fetch games: ${res.statusText}`;
+                setError(errorMsg);
+                console.error(errorMsg);
+                return;
             }
-            const data = await res.json();
+            const data: Game[] = await res.json();
             setGames(data);
-        } catch (err: any) {
-            setError(err.message || 'An unknown error occurred while fetching games');
-            console.error('Error fetching games:', err);
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error('Unknown error');
+            setError(error.message);
+            console.error('Error fetching games:', error);
         } finally {
             setLoading(false);
         }
     }, [searchTerm, developerFilter, startDateFilter, endDateFilter, selectedGenres, selectedPlatforms]);
 
-    // Функція для отримання всіх жанрів з API
     const fetchAllGenres = useCallback(async () => {
         try {
             const res = await fetch('/api/genres');
-            if (!res.ok) throw new Error('Failed to fetch genres.');
+            if (!res.ok) {
+                const errorMsg = 'Failed to fetch genres.';
+                console.error(errorMsg);
+                return; // не кидаємо throw
+            }
             const data: Option[] = await res.json();
             setAllGenres(data);
-        } catch (err: any) {
-            console.error('Error fetching genres:', err);
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error('Unknown error');
+            console.error('Error fetching genres:', error);
         }
     }, []);
 
-    // Функція для отримання всіх платформ з API
     const fetchAllPlatforms = useCallback(async () => {
         try {
             const res = await fetch('/api/platforms');
-            if (!res.ok) throw new Error('Failed to fetch platforms.');
+            if (!res.ok) {
+                const errorMsg = 'Failed to fetch platforms.';
+                console.error(errorMsg);
+                return;
+            }
             const data: Option[] = await res.json();
             setAllPlatforms(data);
-        } catch (err: any) {
-            console.error('Error fetching platforms:', err);
+        } catch (err) {
+            const error = err instanceof Error ? err : new Error('Unknown error');
+            console.error('Error fetching platforms:', error);
         }
     }, []);
 
-    // Завантаження ігор та опцій фільтрів при першому рендері та зміні фільтрів
     useEffect(() => {
-        fetchGames();
+        (async () => {
+            try {
+                await fetchGames();
+            } catch (err) {
+                console.error('Failed to load games:', err);
+            }
+        })();
     }, [fetchGames]);
 
     useEffect(() => {
-        fetchAllGenres();
-        fetchAllPlatforms();
+        (async () => {
+            try {
+                await fetchAllGenres();
+                await fetchAllPlatforms();
+            } catch (err) {
+                console.error('Failed to load genres or platforms:', err);
+            }
+        })();
     }, [fetchAllGenres, fetchAllPlatforms]);
 
-    // Обробники зміни для чекбоксів
     const handleGenreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = e.target;
-        setSelectedGenres(prev =>
-            checked ? [...prev, value] : prev.filter(genre => genre !== value)
+        setSelectedGenres((prev) =>
+            checked ? [...prev, value] : prev.filter((genre) => genre !== value)
         );
     };
 
     const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = e.target;
-        setSelectedPlatforms(prev =>
-            checked ? [...prev, value] : prev.filter(platform => platform !== value)
+        setSelectedPlatforms((prev) =>
+            checked ? [...prev, value] : prev.filter((platform) => platform !== value)
         );
     };
 

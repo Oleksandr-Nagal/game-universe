@@ -1,4 +1,3 @@
-// src/app/profile/comments/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -38,18 +37,27 @@ export default function UserCommentsPage() {
                 setLoading(true);
                 const res = await fetch(`/api/comments?userId=${session.user.id}`);
                 if (!res.ok) {
-                    throw new Error(`Failed to fetch comments: ${res.statusText}`);
+                    const errorMsg = `Failed to fetch comments: ${res.statusText}`;
+                    setError(errorMsg);
+                    console.error(errorMsg);
+                    return;
                 }
                 const data: Comment[] = await res.json();
                 setComments(data);
-            } catch (err: any) {
-                setError(err.message || 'Помилка завантаження коментарів.');
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    setError(err.message || 'Помилка завантаження коментарів.');
+                } else {
+                    setError('Невідома помилка при завантаженні коментарів.');
+                }
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchComments();
+        fetchComments().catch(err => {
+            console.error('Unhandled fetchComments error:', err);
+        });
     }, [session, status, router]);
 
     const handleDeleteComment = async (commentId: string) => {
@@ -70,7 +78,7 @@ export default function UserCommentsPage() {
                 const errorData = await res.json();
                 alert(`Помилка: ${errorData.error || 'Не вдалося видалити коментар.'}`);
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error('Error deleting comment:', err);
             alert('Помилка сервера при видаленні коментаря.');
         } finally {
@@ -101,14 +109,24 @@ export default function UserCommentsPage() {
 
                 {comments.length === 0 ? (
                     <p className="text-center text-gray-400 text-lg">
-                        У вас ще немає коментарів. <Link href="/games" className="text-blue-400 hover:underline">Знайдіть гру</Link> та залиште свій перший коментар!
+                        У вас ще немає коментарів.{' '}
+                        <Link href="/games" className="text-blue-400 hover:underline">
+                            Знайдіть гру
+                        </Link>{' '}
+                        та залиште свій перший коментар!
                     </p>
                 ) : (
                     <div className="space-y-6">
                         {comments.map((comment) => (
-                            <div key={comment.id} className="bg-gray-700 p-4 rounded-lg shadow-md border border-gray-600">
+                            <div
+                                key={comment.id}
+                                className="bg-gray-700 p-4 rounded-lg shadow-md border border-gray-600"
+                            >
                                 <div className="flex justify-between items-start mb-2">
-                                    <Link href={`/games/${comment.game.id}`} className="text-xl font-semibold text-purple-300 hover:underline">
+                                    <Link
+                                        href={`/games/${comment.game.id}`}
+                                        className="text-xl font-semibold text-purple-300 hover:underline"
+                                    >
                                         {comment.game.title}
                                     </Link>
                                     <button
@@ -136,7 +154,10 @@ export default function UserCommentsPage() {
                 )}
 
                 <div className="text-center mt-8">
-                    <Link href="/profile" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
+                    <Link
+                        href="/profile"
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300"
+                    >
                         Назад до Профілю
                     </Link>
                 </div>

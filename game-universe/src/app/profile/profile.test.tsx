@@ -1,53 +1,105 @@
-import React from 'react';
+// src/app/profile/profile.test.tsx
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ProfilePage from './profile/page';
+import ProfilePage from './page';
+import React from 'react';
+import type { ImageProps, StaticImageData } from 'next/image';
 
-// Мок для next/image
+const mockGetServerSession = jest.fn();
+jest.mock('@/lib/auth', () => ({
+    authOptions: {},
+    getServerSession: mockGetServerSession,
+}));
+
+const mockUseSession = jest.fn();
+const mockUpdateSession = jest.fn();
+jest.mock('next-auth/react', () => ({
+    useSession: () => mockUseSession(),
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+}));
+
+jest.mock('@sentry/nextjs', () => ({
+    captureException: jest.fn(),
+    init: jest.fn(),
+}));
+
 jest.mock('next/image', () => ({
     __esModule: true,
-    default: (props: any) => <img {...props} />, // Використовуємо заміну на <img>
+    default: (props: ImageProps) => {
+        const { src, alt, ...rest } = props;
+        const srcString = typeof src === 'string' ? src : (src as StaticImageData).src || '';
+
+        // eslint-disable-next-line @next/next/no-img-element
+        return <img src={srcString} alt={alt || ''} {...rest} />;
+    },
+}));
+
+const mockPrisma = {
+    user: {
+        findUnique: jest.fn(),
+        update: jest.fn(),
+    },
+};
+jest.mock('@/lib/prisma', () => ({
+    prisma: mockPrisma,
 }));
 
 describe('ProfilePage', () => {
-    const mockGetServerSession = jest.fn();
-    const mockRedirect = jest.fn();
-
-    jest.mock('next-auth', () => ({
-        getServerSession: (options: any) => mockGetServerSession(options),
-    }));
-
-    jest.mock('next/navigation', () => ({
-        redirect: (path: string) => mockRedirect(path),
-    }));
-
     beforeEach(() => {
-        jest.clearAllMocks();
-    });
+        mockGetServerSession.mockReset();
+        mockUseSession.mockReset();
+        mockPrisma.user.findUnique.mockReset();
+        mockPrisma.user.update.mockReset();
 
-    it('redirects to sign-in if user is not authenticated', async () => {
-        mockGetServerSession.mockResolvedValueOnce(null);
-        await ProfilePage();
-        expect(mockRedirect).toHaveBeenCalledWith('/auth/signin');
-        expect(screen.queryByText('Мій Профіль')).not.toBeInTheDocument();
-    });
-
-    it('renders profile page for authenticated user', async () => {
-        mockGetServerSession.mockResolvedValueOnce({
+        mockGetServerSession.mockResolvedValue({
             user: {
-                id: '123',
+                id: 'test-user-id',
                 name: 'Test User',
                 email: 'test@example.com',
-                image: '/avatars/avatar1.png',
+                image: '/default-avatar.png',
                 role: 'USER',
             },
         });
+        mockUseSession.mockReturnValue({
+            data: {
+                user: {
+                    id: 'test-user-id',
+                    name: 'Test User',
+                    email: 'test@example.com',
+                    image: '/default-avatar.png',
+                    role: 'USER',
+                },
+            },
+            status: 'authenticated',
+            update: mockUpdateSession,
+        });
+        mockPrisma.user.findUnique.mockResolvedValue({
+            id: 'test-user-id',
+            name: 'Test User',
+            email: 'test@example.com',
+            image: '/default-avatar.png',
+            role: 'USER',
+        });
+    });
 
-        render(await ProfilePage());
+    it('redirects to home if user is not authenticated', async () => {
+        mockGetServerSession.mockResolvedValue(null);
+        const mockRedirect = jest.fn();
+        jest.mock('next/navigation', () => ({
+            redirect: mockRedirect,
+        }));
 
-        expect(screen.getByText('Мій Профіль')).toBeInTheDocument();
-        expect(screen.getByText(/Test User/)).toBeInTheDocument();
-        expect(screen.getByText(/test@example.com/)).toBeInTheDocument();
-        expect(screen.getByAltText('Test User')).toBeInTheDocument();
+        render(<ProfilePage />);
+
+        expect(mockRedirect).toHaveBeenCalledWith('/');
+    });
+
+    it('renders profile information for authenticated user', async () => {
+        render(<ProfilePage />);
+
+        expect(screen.getByText('Test User')).toBeInTheDocument();
+        expect(screen.getByText('test@example.com')).toBeInTheDocument();
+        expect(screen.getByAltText('Аватар користувача')).toBeInTheDocument();
     });
 });

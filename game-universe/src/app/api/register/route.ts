@@ -1,4 +1,3 @@
-// src/app/api/register/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
@@ -9,7 +8,10 @@ export async function POST(request: Request) {
         const { name, email, password } = await request.json();
 
         if (!email || !password) {
-            return NextResponse.json({ error: 'Електронна пошта та пароль є обов\'язковими.' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'Електронна пошта та пароль є обов&#39;язковими.' },
+                { status: 400 }
+            );
         }
 
         const existingUser = await prisma.user.findUnique({
@@ -17,7 +19,10 @@ export async function POST(request: Request) {
         });
 
         if (existingUser) {
-            return NextResponse.json({ error: 'Користувач з такою електронною поштою вже зареєстрований.' }, { status: 409 });
+            return NextResponse.json(
+                { error: 'Користувач з такою електронною поштою вже зареєстрований.' },
+                { status: 409 }
+            );
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,11 +37,25 @@ export async function POST(request: Request) {
             },
         });
 
-        const { password: _, ...userWithoutPassword } = newUser;
+        const userWithoutPassword = {
+            id: newUser.id,
+            name: newUser.name,
+            email: newUser.email,
+            role: newUser.role,
+            emailVerified: newUser.emailVerified,
+            createdAt: newUser.createdAt,
+            updatedAt: newUser.updatedAt,
+        };
 
-        return NextResponse.json({ message: 'Користувача успішно зареєстровано!', user: userWithoutPassword }, { status: 201 });
+        return NextResponse.json(
+            { message: 'Користувача успішно зареєстровано!', user: userWithoutPassword },
+            { status: 201 }
+        );
     } catch (error) {
         console.error('Помилка реєстрації користувача:', error);
-        return NextResponse.json({ error: 'Помилка сервера під час реєстрації.' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Помилка сервера під час реєстрації.' },
+            { status: 500 }
+        );
     }
 }

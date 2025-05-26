@@ -38,25 +38,32 @@ export default function UserWishlistPage() {
         const fetchWishlist = async () => {
             try {
                 setLoading(true);
-                // Зауваження: Ваш API для списку бажань має повертати дані для поточного користувача.
-                // Якщо API `/api/wishlist` вже фільтрує за користувачем з сесії,
-                // то додатковий `userId` не потрібен. В іншому випадку, можливо, доведеться додати `?userId=${session.user.id}`
-                // або обробляти це на сервері через сесію.
                 const res = await fetch(`/api/wishlist`);
                 if (!res.ok) {
-                    throw new Error(`Failed to fetch wishlist: ${res.statusText}`);
+                    const errorMsg = `Failed to fetch wishlist: ${res.statusText}`;
+                    setError(errorMsg);
+                    console.error(errorMsg);
+                    return;
                 }
                 const data: WishlistItem[] = await res.json();
                 setWishlist(data);
-            } catch (err: any) {
-                setError(err.message || 'Помилка завантаження списку бажань.');
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError('Помилка завантаження списку бажань.');
+                }
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchWishlist();
+        fetchWishlist().catch(err => {
+            console.error('Unhandled fetchWishlist error:', err);
+        });
+
     }, [session, status, router]);
+
 
     const handleRemoveFromWishlist = async (gameId: string) => {
         if (!confirm('Ви впевнені, що хочете видалити цю гру зі списку бажань?')) {
@@ -78,9 +85,12 @@ export default function UserWishlistPage() {
                 const errorData = await res.json();
                 alert(`Помилка: ${errorData.error || 'Не вдалося видалити гру зі списку бажань.'}`);
             }
-        } catch (err) {
-            console.error('Error removing from wishlist:', err);
-            alert('Помилка сервера при видаленні зі списку бажань.');
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Помилка завантаження списку бажань.');
+            }
         } finally {
             setDeletingId(null);
         }

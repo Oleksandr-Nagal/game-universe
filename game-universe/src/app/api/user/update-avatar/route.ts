@@ -1,8 +1,8 @@
-// src/app/api/user/update-avatar/route.ts (новий API маршрут)
+// src/app/api/user/update-avatar/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import {prisma} from '@/lib/prisma'; // Переконайтеся, що у вас є екземпляр PrismaClient
+import {prisma} from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -22,8 +22,7 @@ export async function POST(req: NextRequest) {
             where: { id: session.user.id },
             data: { image: imageUrl },
         });
-
-        // Не повертаємо весь об'єкт користувача з хешованим паролем
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password: _, ...userWithoutPassword } = updatedUser;
         return NextResponse.json(userWithoutPassword);
     } catch (error) {

@@ -1,7 +1,7 @@
-// src/app/games/[id]/page.tsx
+//src/app/games/[id]/page.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -29,6 +29,7 @@ interface Comment {
         id: string;
         name?: string | null;
         image?: string | null;
+        email?: string | null;
     };
 }
 
@@ -48,17 +49,28 @@ export default function GameDetailPage() {
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editingCommentContent, setEditingCommentContent] = useState('');
 
+
     const fetchGame = useCallback(async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await fetch(`/api/games/${id}`);
             if (!res.ok) {
-                throw new Error(`Failed to fetch game: ${res.statusText}`);
+                const errorMsg = `Failed to fetch game: ${res.statusText}`;
+                setError(errorMsg);
+                console.error(errorMsg);
+                return;
             }
-            const data = await res.json();
+            const data: Game = await res.json();
             setGame(data);
-        } catch (err: any) {
-            setError(err.message || 'An unknown error occurred');
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+                console.error('Error fetching game:', err);
+            } else {
+                setError('An unknown error occurred');
+                console.error('Unknown error fetching game:', err);
+            }
         } finally {
             setLoading(false);
         }
@@ -69,46 +81,69 @@ export default function GameDetailPage() {
             setIsInWishlist(false);
             return;
         }
+        setWishlistLoading(true);
         try {
             const res = await fetch(`/api/wishlist/status?gameId=${game.id}`);
-            if (res.ok) {
-                const data = await res.json();
-                setIsInWishlist(data.isInWishlist);
-            } else {
+            if (!res.ok) {
                 console.error('Failed to fetch wishlist status');
                 setIsInWishlist(false);
+                return;
             }
+            const data = await res.json();
+            setIsInWishlist(data.isInWishlist);
         } catch (error) {
             console.error('Error checking wishlist status:', error);
             setIsInWishlist(false);
+        } finally {
+            setWishlistLoading(false);
         }
     }, [session?.user?.id, game?.id]);
 
     const fetchComments = useCallback(async () => {
         if (!id) return;
+        setCommentLoading(true);
+        setCommentError(null);
         try {
             const res = await fetch(`/api/comments?gameId=${id}`);
             if (!res.ok) {
-                throw new Error(`Failed to fetch comments: ${res.statusText}`);
+                const errorMsg = `Failed to fetch comments: ${res.statusText}`;
+                setCommentError(errorMsg);
+                console.error(errorMsg);
+                return;
             }
             const data: Comment[] = await res.json();
             setComments(data);
-        } catch (err: any) {
-            setCommentError(err.message || 'Помилка завантаження коментарів.');
-            console.error('Error fetching comments:', err);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setCommentError(err.message);
+                console.error('Error fetching comments:', err);
+            } else {
+                setCommentError('Помилка завантаження коментарів.');
+                console.error('Unknown error fetching comments:', err);
+            }
+        } finally {
+            setCommentLoading(false);
         }
     }, [id]);
 
     useEffect(() => {
-        if (id) {
-            fetchGame();
-            fetchComments();
-        }
+        if (!id) return;
+
+        const loadData = async () => {
+            await fetchGame();
+            await fetchComments();
+        };
+
+        void loadData();
     }, [id, fetchGame, fetchComments]);
 
     useEffect(() => {
         if (game?.id && status === 'authenticated') {
-            checkWishlistStatus();
+            const checkStatus = async () => {
+                await checkWishlistStatus();
+            };
+
+            void checkStatus();
         }
     }, [game?.id, status, checkWishlistStatus]);
 
@@ -178,6 +213,7 @@ export default function GameDetailPage() {
                             id: session.user!.id,
                             name: userData?.name || session.user!.name,
                             image: userData?.image || session.user!.image,
+                            email: userData?.email || session.user!.email,
                         }
                     },
                     ...prev
@@ -194,6 +230,7 @@ export default function GameDetailPage() {
             setCommentLoading(false);
         }
     };
+
 
     const handleEditClick = (comment: Comment) => {
         setEditingCommentId(comment.id);
@@ -295,7 +332,7 @@ export default function GameDetailPage() {
     }
 
     return (
-        <main className="flex min-h-screen flex-col items-center p-6  text-white">
+        <main className="flex min-h-screen flex-col items-center p-6 text-white">
             <div className="w-full max-w-4xl bg-gray-800/80 p-8 rounded-lg shadow-2xl border border-gray-700 mt-12 backdrop-blur-sm">
                 <h1 className="text-4xl font-bold text-center text-orange-400 mb-6 break-words">{game.title}</h1>
 
@@ -318,19 +355,29 @@ export default function GameDetailPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg mb-8 bg-gray-700/70 p-4 rounded-lg border border-gray-600">
-                    <p className="text-gray-400"><span className="font-semibold text-white">Дата випуску:</span> {new Date(game.releaseDate).toLocaleDateString()}</p>
-                    {game.developer && <p className="text-gray-400"><span className="font-semibold text-white">Розробник:</span> {game.developer.name}</p>}
-                    {game.publisher && <p className="text-gray-400"><span className="font-semibold text-white">Видавець:</span> {game.publisher.name}</p>}
-                    {game.genres.length > 0 && (
+                    <p className="text-gray-400">
+                        <span className="font-semibold text-white">Дата випуску:</span> {new Date(game.releaseDate).toLocaleDateString()}
+                    </p>
+                    {game.developer?.name && (
                         <p className="text-gray-400">
-                            <span className="font-semibold text-white">Жанри:</span>{' '}
-                            {game.genres.map((gg) => gg.genre.name).join(', ')}
+                            <span className="font-semibold text-white">Розробник:</span> {game.developer.name}
                         </p>
                     )}
-                    {game.platforms.length > 0 && (
+                    {game.publisher?.name && (
+                        <p className="text-gray-400">
+                            <span className="font-semibold text-white">Видавець:</span> {game.publisher.name}
+                        </p>
+                    )}
+                    {Array.isArray(game.genres) && game.genres.length > 0 && (
+                        <p className="text-gray-400">
+                            <span className="font-semibold text-white">Жанри:</span>{' '}
+                            {game.genres.map((g) => g.genre.name).join(', ')}
+                        </p>
+                    )}
+                    {Array.isArray(game.platforms) && game.platforms.length > 0 && (
                         <p className="text-gray-400">
                             <span className="font-semibold text-white">Платформи:</span>{' '}
-                            {game.platforms.map((gp) => gp.platform.name).join(', ')}
+                            {game.platforms.map((p) => p.platform.name).join(', ')}
                         </p>
                     )}
                 </div>
@@ -352,19 +399,20 @@ export default function GameDetailPage() {
                     </p>
                 )}
 
+                {/* Comments Section */}
                 <section className="mt-10 p-6 bg-gray-700/70 rounded-lg shadow-inner border border-gray-600 backdrop-blur-sm">
                     <h2 className="text-3xl font-bold text-yellow-300 mb-6 text-center">Коментарі</h2>
 
                     {status === 'authenticated' ? (
                         <form onSubmit={handleAddComment} className="mb-8 space-y-4">
-                            <textarea
-                                value={newCommentContent}
-                                onChange={(e) => setNewCommentContent(e.target.value)}
-                                placeholder="Напишіть свій коментар..."
-                                rows={4}
-                                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400 min-h-[100px] resize-y"
-                                disabled={commentLoading}
-                            ></textarea>
+            <textarea
+                value={newCommentContent}
+                onChange={(e) => setNewCommentContent(e.target.value)}
+                placeholder="Напишіть свій коментар..."
+                rows={4}
+                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400 min-h-[100px] resize-y"
+                disabled={commentLoading}
+            />
                             {commentError && <p className="text-red-400 text-sm">{commentError}</p>}
                             <button
                                 type="submit"
@@ -399,7 +447,14 @@ export default function GameDetailPage() {
                                                 />
                                             </div>
                                         )}
-                                        <p className="font-semibold text-white">{comment.user?.name || comment.user?.id || 'Невідомий користувач'}</p>
+                                        <div>
+                                            <p className="font-semibold text-white">
+                                                {comment.user?.name || comment.user?.id || 'Невідомий користувач'}
+                                            </p>
+                                            {comment.user?.email && (
+                                                <p className="text-gray-400 text-sm">{comment.user.email}</p>
+                                            )}
+                                        </div>
                                         <p className="text-gray-500 text-sm ml-auto">
                                             {new Date(comment.createdAt).toLocaleDateString()} о {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             {comment.createdAt !== comment.updatedAt && (
@@ -409,13 +464,13 @@ export default function GameDetailPage() {
                                     </div>
                                     {editingCommentId === comment.id ? (
                                         <div className="space-y-2">
-                                            <textarea
-                                                value={editingCommentContent}
-                                                onChange={(e) => setEditingCommentContent(e.target.value)}
-                                                rows={3}
-                                                className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-500 focus:outline-none focus:border-blue-400 min-h-[80px] resize-y"
-                                                disabled={commentLoading}
-                                            ></textarea>
+                        <textarea
+                            value={editingCommentContent}
+                            onChange={(e) => setEditingCommentContent(e.target.value)}
+                            rows={3}
+                            className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-500 focus:outline-none focus:border-blue-400 min-h-[80px] resize-y"
+                            disabled={commentLoading}
+                        ></textarea>
                                             <div className="flex justify-end space-x-2">
                                                 <button
                                                     onClick={() => handleUpdateComment(comment.id)}
@@ -458,10 +513,14 @@ export default function GameDetailPage() {
                             ))}
                         </div>
                     )}
+
                 </section>
 
                 <div className="text-center mt-8">
-                    <Link href="/games" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300">
+                    <Link
+                        href="/games"
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-300"
+                    >
                         Повернутися до всіх ігор
                     </Link>
                 </div>

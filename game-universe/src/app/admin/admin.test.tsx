@@ -1,64 +1,99 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
+// src/app/admin/admin.test.tsx
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import AdminPage from './page';
+import AdminPage from '../admin/page';
 
-// Правильно ініціалізуємо mockPrisma до його використання
 const mockPrisma = {
-    user: { count: jest.fn() },
-    game: { count: jest.fn() },
-    comment: { count: jest.fn() },
+    user: {
+        findMany: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+    },
+
 };
-
-const mockGetServerSession = jest.fn();
-const mockRedirect = jest.fn();
-
-jest.mock('next-auth', () => ({
-    getServerSession: (options: any) => mockGetServerSession(options),
-}));
-
-jest.mock('next/navigation', () => ({
-    redirect: (path: string) => mockRedirect(path),
-}));
 
 jest.mock('@/lib/prisma', () => ({
     prisma: mockPrisma,
 }));
 
+const mockGetServerSession = jest.fn();
+
+jest.mock('@/lib/auth', () => ({
+    authOptions: {},
+    getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
+}));
+
+
+jest.mock('@sentry/nextjs', () => ({
+    captureException: jest.fn(),
+    init: jest.fn(),
+}));
+
 describe('AdminPage', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
-    });
+        mockPrisma.user.findMany.mockReset();
+        mockPrisma.user.update.mockReset();
+        mockPrisma.user.delete.mockReset();
+        mockGetServerSession.mockReset();
 
-    it('redirects to sign-in if user is not authenticated', async () => {
-        mockGetServerSession.mockResolvedValueOnce(null);
-        await AdminPage();
-        expect(mockRedirect).toHaveBeenCalledWith('/auth/signin');
-    });
-
-    it('redirects to home if user is not an admin', async () => {
-        mockGetServerSession.mockResolvedValueOnce({
-            user: { id: '123', role: 'USER' },
+        mockGetServerSession.mockResolvedValue({
+            user: {
+                id: 'admin-user-id',
+                name: 'Admin User',
+                email: 'admin@example.com',
+                role: 'ADMIN',
+            },
         });
-        await AdminPage();
+    });
+
+    it('redirects to home if user is not authenticated', async () => {
+        mockGetServerSession.mockResolvedValue(null);
+
+        const mockRedirect = jest.fn();
+        jest.mock('next/navigation', () => ({
+            redirect: mockRedirect,
+        }));
+
+        render(<AdminPage/>);
+
         expect(mockRedirect).toHaveBeenCalledWith('/');
     });
 
-    it('renders admin stats for admin user', async () => {
-        mockGetServerSession.mockResolvedValueOnce({
-            user: { id: '123', role: 'ADMIN', name: 'Admin User' },
+    it('redirects to home if user is authenticated but not ADMIN', async () => {
+        mockGetServerSession.mockResolvedValue({
+            user: {
+                id: 'user-id',
+                name: 'Regular User',
+                email: 'user@example.com',
+                role: 'USER',
+            },
         });
 
-        mockPrisma.user.count.mockResolvedValueOnce(10);
-        mockPrisma.game.count.mockResolvedValueOnce(50);
-        mockPrisma.comment.count.mockResolvedValueOnce(200);
+        const mockRedirect = jest.fn();
+        jest.mock('next/navigation', () => ({
+            redirect: mockRedirect,
+        }));
 
-        render(await AdminPage());
+        render(<AdminPage/>);
+
+        expect(mockRedirect).toHaveBeenCalledWith('/');
+    });
+
+    it('renders admin dashboard for ADMIN user', async () => {
+        mockPrisma.user.findMany.mockResolvedValue([
+            { id: '1', name: 'User 1', email: 'user1@example.com', role: 'USER' },
+            { id: '2', name: 'User 2', email: 'user2@example.com', role: 'ADMIN' },
+        ]);
+
+        render(<AdminPage/>);
 
         expect(screen.getByText('Панель Адміністратора')).toBeInTheDocument();
-        expect(screen.getByText('Всього Користувачів')).toBeInTheDocument();
-        expect(screen.getByText('10')).toBeInTheDocument();
-        expect(screen.getByText('50')).toBeInTheDocument();
-        expect(screen.getByText('200')).toBeInTheDocument();
+        expect(screen.getByText('Управління Користувачами')).toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(screen.getByText('User 1')).toBeInTheDocument();
+            expect(screen.getByText('User 2')).toBeInTheDocument();
+        });
     });
+
 });

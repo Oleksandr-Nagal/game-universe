@@ -1,20 +1,30 @@
-// src/app/api/admin/comments/[id]/route.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function DELETE(
-    request: Request,
-    context: { params: { id: string } }
-) {
+    _req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user?.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Доступ заборонено. Потрібні права адміністратора.' }, { status: 403 });
+        return NextResponse.json(
+            { error: 'Доступ заборонено. Потрібні права адміністратора.' },
+            { status: 403 }
+        );
     }
 
-    const commentIdToDelete = context.params.id;
+    // Розпаковуємо асинхронний params, отримуємо id
+    const { id: commentIdToDelete } = await params;
+
+    if (!commentIdToDelete) {
+        return NextResponse.json(
+            { error: 'ID коментаря не передано в параметрах.' },
+            { status: 400 }
+        );
+    }
 
     try {
         const existingComment = await prisma.comment.findUnique({
@@ -22,7 +32,10 @@ export async function DELETE(
         });
 
         if (!existingComment) {
-            return NextResponse.json({ error: 'Коментар не знайдено.' }, { status: 404 });
+            return NextResponse.json(
+                { error: 'Коментар не знайдено.' },
+                { status: 404 }
+            );
         }
 
         await prisma.comment.delete({
@@ -32,9 +45,9 @@ export async function DELETE(
         return NextResponse.json({ message: 'Коментар успішно видалено.' });
     } catch (error) {
         console.error('Помилка видалення коментаря:', error);
-        if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
-            return NextResponse.json({ error: 'Коментар не знайдено.' }, { status: 404 });
-        }
-        return NextResponse.json({ error: 'Внутрішня помилка сервера.' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'Внутрішня помилка сервера.' },
+            { status: 500 }
+        );
     }
 }
