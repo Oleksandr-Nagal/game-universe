@@ -6,9 +6,30 @@ import AdminPage from '../admin/page';
 // Define mock objects directly within the jest.mock factories.
 // We will use the returned mock objects for resetting in beforeEach.
 
-let mockPrismaClientInstance: any; // Used to hold the instance returned by the mock factory
-let mockAuthInstance: any; // Used to hold the instance returned by the mock factory
-let mockNextNavigationInstance: any; // Used to hold the instance returned by the mock factory
+// Явно вказуємо типи для мокованих об'єктів, щоб уникнути 'any'.
+// Для prismaClient можна створити інтерфейс, або використати Partial<typeof prisma>
+// Якщо інтерфейс не визначений, можна використовувати більш конкретні типи для кожного методу.
+let mockPrismaClientInstance: {
+    user: {
+        findMany: jest.Mock;
+        update: jest.Mock;
+        delete: jest.Mock;
+        count: jest.Mock;
+    };
+    game: {
+        count: jest.Mock;
+    };
+    comment: {
+        count: jest.Mock;
+    };
+};
+let mockAuthInstance: {
+    authOptions: object;
+    getServerSession: jest.Mock;
+};
+let mockNextNavigationInstance: {
+    redirect: jest.Mock;
+};
 
 jest.mock('@/lib/prisma', () => {
     mockPrismaClientInstance = {

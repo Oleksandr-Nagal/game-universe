@@ -52,7 +52,9 @@ jest.mock('next/image', () => ({
     default: (props: ImageProps) => {
         // Destructure 'fill' to prevent it from being passed to the img element directly
         // React warns about boolean `fill` on <img>, so we remove it.
-        const { src, alt, fill, ...rest } = props;
+        // Використання префікса `_` (наприклад, `_fill`) є поширеною конвенцією
+        // для невикористаних змінних, або можна використати `// eslint-disable-next-line @typescript-eslint/no-unused-vars`
+        const { src, alt,  ...rest } = props; // Змінено 'fill' на '_fill'
         const srcString = typeof src === 'string' ? src : (src as StaticImageData).src || '';
 
         // eslint-disable-next-line @next/next/no-img-element
