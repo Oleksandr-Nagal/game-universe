@@ -7,7 +7,7 @@ const createJestConfig = nextJest({
 
 /** @type {import('jest').Config} */
 const customJestConfig = {
-    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'], // Підключення jest.setup.ts
+    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
     testEnvironment: 'jest-environment-jsdom',
     testEnvironmentOptions: {
         customExportConditions: ['node', 'require', 'default'],
@@ -26,9 +26,6 @@ const customJestConfig = {
             },
         }],
     },
-    // **ВИПРАВЛЕННЯ ТУТ:**
-    // Оновлюємо transformIgnorePatterns, щоб явно трансформувати пакети 'next' та 'next-auth'
-    // та їхні підпакети. Це більш цілеспрямований підхід для Jest.
     transformIgnorePatterns: [
         '/node_modules/(?!(next|next-auth|@next-auth)/)',
     ],
