@@ -1,15 +1,18 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
+import React from 'react';
 import GamesPage from '../app/games/page';
 import type { ImageProps, StaticImageData } from 'next/image';
+import { useSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth';
+import { type MockedFunction } from 'jest-mock';
+import { SessionContextValue } from 'next-auth/react';
 
 jest.mock('next/image', () => ({
     __esModule: true,
     default: (props: ImageProps) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { src, alt, fill: _fill, ...rest } = props;
+        const { src, alt, ...rest } = props;
         const srcString = typeof src === 'string' ? src : (src as StaticImageData).src || '';
         // eslint-disable-next-line @next/next/no-img-element
         return <img src={srcString} alt={alt || ''} {...rest} />;
@@ -23,6 +26,20 @@ jest.mock('next/link', () => {
     MockLink.displayName = 'Link';
     return MockLink;
 });
+
+jest.mock('next-auth/react', () => ({
+    useSession: jest.fn(),
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+}));
+
+jest.mock('next-auth', () => ({
+    getServerSession: jest.fn(),
+}));
+
+jest.mock('@/lib/auth', () => ({
+    authOptions: {},
+}));
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
@@ -65,8 +82,22 @@ const mockPlatforms = [
 ];
 
 describe('GamesPage', () => {
+    let mockedUseSession: MockedFunction<typeof useSession>;
+    let mockedGetServerSession: MockedFunction<typeof getServerSession>;
+
     beforeEach(() => {
-        mockFetch.mockClear();
+        jest.clearAllMocks();
+
+        mockedUseSession = useSession as MockedFunction<typeof useSession>;
+        mockedGetServerSession = getServerSession as MockedFunction<typeof getServerSession>;
+
+        mockedUseSession.mockReturnValue({
+            data: null,
+            status: 'unauthenticated',
+            update: jest.fn(),
+        } as SessionContextValue);
+        mockedGetServerSession.mockResolvedValue(null);
+
         mockFetch.mockImplementation((url: RequestInfo | URL) => {
             const urlString = url.toString();
             if (urlString.startsWith('/api/genres')) {
@@ -127,7 +158,6 @@ describe('GamesPage', () => {
         render(<GamesPage />);
         expect(screen.getByText('Завантаження ігор...')).toBeInTheDocument();
     });
-
 
     test('displays error message if games fetch fails', async () => {
         mockFetch.mockImplementationOnce(() =>
@@ -295,7 +325,6 @@ describe('GamesPage', () => {
             expect(mockFetch).toHaveBeenCalledWith('/api/games?');
         });
     });
-
 
     test('navigates to game detail page on game card click', async () => {
         render(<GamesPage />);

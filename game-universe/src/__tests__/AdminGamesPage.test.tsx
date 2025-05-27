@@ -188,7 +188,6 @@ describe('AdminGamesPage', () => {
                     json: () => Promise.resolve({ error: 'Games not found' }),
                 });
             }
-            // Fallback to a successful response for other fetches that might occur
             return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
         });
 
@@ -203,7 +202,6 @@ describe('AdminGamesPage', () => {
             if (url.toString().startsWith('/api/admin/games') && (_options?.method === 'GET' || _options?.method === undefined)) {
                 return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
             }
-            // Fallback to a successful response for other fetches that might occur
             return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
         });
 

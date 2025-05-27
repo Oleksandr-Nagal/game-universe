@@ -1,7 +1,7 @@
 import { PATCH, DELETE } from '@/app/api/comments/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
-import type { DefaultSession } from 'next-auth'; // Import DefaultSession type
+import type { DefaultSession } from 'next-auth';
 
 jest.mock('@/lib/prisma', () => ({
     prisma: {
@@ -27,22 +27,18 @@ const mockedPrisma = prisma as unknown as {
 
 const mockedGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
-// Assuming UserRole is a string literal type or enum like 'USER' | 'ADMIN'
 type UserRole = 'USER' | 'ADMIN';
 
-// Define a local MockSession interface that correctly merges with DefaultSession's user properties
 interface MockSession {
     user?: {
         id: string;
         role: UserRole;
-    } & DefaultSession['user']; // Combine custom properties with DefaultSession's user
-    expires: string; // NextAuth Session requires an expires property
+    } & DefaultSession['user'];
+    expires: string;
 }
 
-// Define a type for the request body in createRequest
 interface RequestBody {
     content?: string;
-    // Add other potential properties if createRequest is used for other types of bodies
 }
 
 function createRequest(body: RequestBody, url: string = 'http://localhost/api/comments/abc123') {
@@ -70,14 +66,12 @@ describe('PATCH /api/comments/[id]', () => {
     });
 
     it('returns 400 if comment ID missing', async () => {
-        // Use a typed session object
         const mockUserSession: MockSession = {
             user: { id: 'user1', role: 'USER', name: 'User', email: 'user@example.com' },
             expires: '2024-12-31T23:59:59.000Z'
         };
         mockedGetServerSession.mockResolvedValueOnce(mockUserSession);
 
-        // URL без id
         const req = new Request('http://localhost/api/comments/', {
             method: 'PATCH',
             body: JSON.stringify({ content: 'Test' }),

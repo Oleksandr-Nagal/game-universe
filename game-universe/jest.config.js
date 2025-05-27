@@ -15,8 +15,10 @@ const customJestConfig = {
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
     },
+    moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node', 'mjs'],
+    extensionsToTreatAsEsm: ['.ts', '.tsx'],
     transform: {
-        '^.+\\.(ts|tsx|js|jsx)$': ['@swc/jest', {
+        '^.+\\.(ts|tsx|js|jsx|mjs)$': ['@swc/jest', {
             jsc: {
                 transform: {
                     react: { runtime: 'automatic' },
@@ -24,8 +26,11 @@ const customJestConfig = {
             },
         }],
     },
+    // **ВИПРАВЛЕННЯ ТУТ:**
+    // Оновлюємо transformIgnorePatterns, щоб явно трансформувати пакети 'next' та 'next-auth'
+    // та їхні підпакети. Це більш цілеспрямований підхід для Jest.
     transformIgnorePatterns: [
-        '/node_modules/(?!node-fetch|jose|@web-platform-tests/tools|next-auth|undici|openid-client)/',
+        '/node_modules/(?!(next|next-auth|@next-auth)/)',
     ],
     collectCoverageFrom: [
         'src/**/*.{js,jsx,ts,tsx}',
@@ -50,8 +55,8 @@ const customJestConfig = {
         },
     },
     testMatch: [
-        '**/__tests__/**/*.[jt]s?(x)',  // Шукає файли у папці __tests__
-        '**/?(*.)+(spec|test).[tj]s?(x)', // Шукає файли з суфіксом .spec.js/ts/jsx/tsx або .test.js/ts/jsx/tsx
+        '**/__tests__/**/*.[jt]s?(x)',
+        '**/?(*.)+(spec|test).[tj]s?(x)',
     ],
 
 };

@@ -1,4 +1,3 @@
-// src/app/admin/comments/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -44,9 +43,8 @@ export default function AdminCommentsPage() {
         setLoading(true);
         try {
             const res = await fetch('/api/admin/comments');
-            const errorData = !res.ok ? await res.json() : null;
-
             if (!res.ok) {
+                const errorData = await res.json();
                 const message = errorData?.error || `Помилка отримання коментарів: ${res.statusText}`;
                 setError(message);
                 console.error('Error fetching comments:', message);
@@ -63,8 +61,7 @@ export default function AdminCommentsPage() {
                 setError('Виникла неочікувана помилка при завантаженні коментарів.');
                 console.error('Error fetching comments:', err);
             }
-        }
-        finally {
+        } finally {
             setLoading(false);
         }
     }, [session, status, router]);

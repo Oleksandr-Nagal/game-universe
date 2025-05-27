@@ -47,12 +47,55 @@ interface Comment {
     };
 }
 
+const MessageModal = ({ message, type, onConfirm, onCancel, onClose }: {
+    message: string;
+    type: 'alert' | 'confirm' | 'error';
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    onClose: () => void;
+}) => {
+    if (!message) return null;
+
+    const isConfirm = type === 'confirm';
+    const isError = type === 'error';
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-gray-800 p-6 rounded-lg shadow-xl border border-gray-700 max-w-sm w-full">
+                <p className={`text-lg font-semibold mb-4 ${isError ? 'text-red-400' : 'text-white'}`}>
+                    {message}
+                </p>
+                <div className="flex justify-end space-x-3">
+                    {isConfirm && (
+                        <button
+                            onClick={() => { if (onCancel) onCancel(); onClose(); }}
+                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+                        >
+                            Скасувати
+                        </button>
+                    )}
+                    <button
+                        onClick={() => { if (onConfirm) onConfirm(); onClose(); }}
+                        className={`px-4 py-2 rounded-md transition-colors ${
+                            isConfirm ? 'bg-blue-600 hover:bg-blue-700' : (isError ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700')
+                        } text-white`}
+                    >
+                        {isConfirm ? 'Підтвердити' : 'ОК'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function GameDetailPage() {
     const { id } = useParams();
     const { data: session, status } = useSession() as { data: CustomSession | null, status: 'loading' | 'authenticated' | 'unauthenticated' };
+
     const [game, setGame] = useState<Game | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
     const [isInWishlist, setIsInWishlist] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
 
@@ -63,6 +106,20 @@ export default function GameDetailPage() {
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editingCommentContent, setEditingCommentContent] = useState('');
 
+    const [modal, setModal] = useState<{
+        message: string;
+        type: 'alert' | 'confirm' | 'error';
+        onConfirm?: () => void;
+        onCancel?: () => void;
+    } | null>(null);
+
+    const showModal = useCallback((message: string, type: 'alert' | 'confirm' | 'error', onConfirm?: () => void, onCancel?: () => void) => {
+        setModal({ message, type, onConfirm, onCancel });
+    }, []);
+
+    const closeModal = useCallback(() => {
+        setModal(null);
+    }, []);
 
     const fetchGame = useCallback(async () => {
         setLoading(true);
@@ -70,7 +127,8 @@ export default function GameDetailPage() {
         try {
             const res = await fetch(`/api/games/${id}`);
             if (!res.ok) {
-                const errorMsg = `Failed to fetch game: ${res.statusText}`;
+                const errorData = await res.json();
+                const errorMsg = `Failed to fetch game: ${errorData.error || res.statusText}`;
                 setError(errorMsg);
                 console.error(errorMsg);
                 return;
@@ -120,7 +178,8 @@ export default function GameDetailPage() {
         try {
             const res = await fetch(`/api/comments?gameId=${id}`);
             if (!res.ok) {
-                const errorMsg = `Failed to fetch comments: ${res.statusText}`;
+                const errorData = await res.json();
+                const errorMsg = `Failed to fetch comments: ${errorData.error || res.statusText}`;
                 setCommentError(errorMsg);
                 console.error(errorMsg);
                 return;
@@ -163,7 +222,7 @@ export default function GameDetailPage() {
 
     const handleToggleWishlist = async () => {
         if (!session?.user?.id || !game?.id) {
-            alert('Вам потрібно увійти, щоб додати ігри до списку бажань.');
+            showModal('Вам потрібно увійти, щоб додати ігри до списку бажань.', 'alert');
             return;
         }
 
@@ -182,10 +241,10 @@ export default function GameDetailPage() {
                 setIsInWishlist(!isInWishlist);
             } else {
                 const errData = await res.json();
-                alert(`Не вдалося оновити список бажань: ${errData.error || res.statusText}`);
+                showModal(`Не вдалося оновити список бажань: ${errData.error || res.statusText}`, 'error');
             }
         } catch (err) {
-            alert('Виникла помилка під час оновлення списку бажань.');
+            showModal('Виникла помилка під час оновлення списку бажань.', 'error');
             console.error(err);
         } finally {
             setWishlistLoading(false);
@@ -195,11 +254,11 @@ export default function GameDetailPage() {
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!session?.user?.id || !game?.id) {
-            alert('Вам потрібно увійти, щоб залишити коментар.');
+            showModal('Вам потрібно увійти, щоб залишити коментар.', 'alert');
             return;
         }
         if (!newCommentContent.trim()) {
-            alert('Коментар не може бути порожнім.');
+            showModal('Коментар не може бути порожнім.', 'alert');
             return;
         }
 
@@ -217,17 +276,14 @@ export default function GameDetailPage() {
 
             if (res.ok) {
                 const addedComment: Comment = await res.json();
-                const userRes = session.user?.id ? await fetch(`/api/users/${session.user.id}`) : null;
-                const userData = userRes?.ok ? await userRes.json() : null;
-
                 setComments(prev => [
                     {
                         ...addedComment,
                         user: {
                             id: session.user!.id,
-                            name: userData?.name || session.user!.name,
-                            image: userData?.image || session.user!.image,
-                            email: userData?.email || session.user!.email,
+                            name: session.user!.name,
+                            image: session.user!.image,
+                            email: session.user!.email,
                         }
                     },
                     ...prev
@@ -245,19 +301,18 @@ export default function GameDetailPage() {
         }
     };
 
-
-    const handleEditClick = (comment: Comment) => {
+    const handleEditClick = useCallback((comment: Comment) => {
         setEditingCommentId(comment.id);
         setEditingCommentContent(comment.content);
-    };
+    }, []);
 
-    const handleCancelEdit = () => {
+    const handleCancelEdit = useCallback(() => {
         setEditingCommentId(null);
         setEditingCommentContent('');
         setCommentError(null);
-    };
+    }, []);
 
-    const handleUpdateComment = async (commentId: string) => {
+    const handleUpdateComment = useCallback(async (commentId: string) => {
         if (!editingCommentContent.trim()) {
             setCommentError('Коментар не може бути порожнім.');
             return;
@@ -292,13 +347,9 @@ export default function GameDetailPage() {
         } finally {
             setCommentLoading(false);
         }
-    };
+    }, [editingCommentContent]);
 
-    const handleDeleteComment = async (commentId: string) => {
-        if (!confirm('Ви впевнені, що хочете видалити цей коментар? Цю дію не можна скасувати.')) {
-            return;
-        }
-
+    const handleDeleteCommentConfirmed = useCallback(async (commentId: string) => {
         setCommentLoading(true);
         setCommentError(null);
 
@@ -319,7 +370,15 @@ export default function GameDetailPage() {
         } finally {
             setCommentLoading(false);
         }
-    };
+    }, []);
+
+    const handleDeleteComment = useCallback((commentId: string) => {
+        showModal(
+            'Ви впевнені, що хочете видалити цей коментар? Цю дію не можна скасувати.',
+            'confirm',
+            () => handleDeleteCommentConfirmed(commentId)
+        );
+    }, [showModal, handleDeleteCommentConfirmed]);
 
     if (loading) {
         return (
@@ -375,7 +434,8 @@ export default function GameDetailPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg mb-8 bg-gray-700/70 p-4 rounded-lg border border-gray-600">
                     <p className="text-gray-400">
-                        <span className="font-semibold text-white">Дата випуску:</span> {new Date(game.releaseDate).toLocaleDateString()}
+                        <span className="font-semibold text-white">Дата випуску:</span>{' '}
+                        {game.releaseDate ? new Date(game.releaseDate).toLocaleDateString() : 'Невідомо'}
                     </p>
                     {game.developer?.name ? (
                         <p className="text-gray-400">
@@ -439,14 +499,14 @@ export default function GameDetailPage() {
 
                     {status === 'authenticated' ? (
                         <form onSubmit={handleAddComment} className="mb-8 space-y-4">
-            <textarea
-                value={newCommentContent}
-                onChange={(e) => setNewCommentContent(e.target.value)}
-                placeholder="Напишіть свій коментар..."
-                rows={4}
-                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400 min-h-[100px] resize-y"
-                disabled={commentLoading}
-            />
+                            <textarea
+                                value={newCommentContent}
+                                onChange={(e) => setNewCommentContent(e.target.value)}
+                                placeholder="Напишіть свій коментар..."
+                                rows={4}
+                                className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:border-yellow-400 min-h-[100px] resize-y"
+                                disabled={commentLoading}
+                            />
                             {commentError && <p className="text-red-400 text-sm">{commentError}</p>}
                             <button
                                 type="submit"
@@ -498,13 +558,13 @@ export default function GameDetailPage() {
                                     </div>
                                     {editingCommentId === comment.id ? (
                                         <div className="space-y-2">
-                        <textarea
-                            value={editingCommentContent}
-                            onChange={(e) => setEditingCommentContent(e.target.value)}
-                            rows={3}
-                            className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-500 focus:outline-none focus:border-blue-400 min-h-[80px] resize-y"
-                            disabled={commentLoading}
-                        ></textarea>
+                                            <textarea
+                                                value={editingCommentContent}
+                                                onChange={(e) => setEditingCommentContent(e.target.value)}
+                                                rows={3}
+                                                className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-500 focus:outline-none focus:border-blue-400 min-h-[80px] resize-y"
+                                                disabled={commentLoading}
+                                            ></textarea>
                                             <div className="flex justify-end space-x-2">
                                                 <button
                                                     onClick={() => handleUpdateComment(comment.id)}
@@ -559,6 +619,15 @@ export default function GameDetailPage() {
                     </Link>
                 </div>
             </div>
+            {modal && (
+                <MessageModal
+                    message={modal.message}
+                    type={modal.type}
+                    onConfirm={modal.onConfirm}
+                    onCancel={modal.onCancel}
+                    onClose={closeModal}
+                />
+            )}
         </main>
     );
 }

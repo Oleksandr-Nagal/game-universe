@@ -1,4 +1,3 @@
-// app/auth/register/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -45,6 +44,7 @@ export default function RegisterPage() {
 
             if (!res.ok) {
                 setError(data.error || 'Не вдалося зареєструватись.');
+                setIsLoading(false);
                 return;
             }
 
@@ -57,10 +57,13 @@ export default function RegisterPage() {
 
             if (signInResult?.error) {
                 setError('Реєстрація успішна, але автоматичний вхід не вдався: ' + signInResult.error);
-            } else if (signInResult?.ok) {
-                router.push('/');
+                setIsLoading(false);
+                return;
             }
 
+            if (signInResult?.ok) {
+                router.push('/');
+            }
         } catch (err) {
             console.error('Помилка реєстрації:', err);
             setError('Виникла неочікувана помилка під час реєстрації.');
@@ -73,7 +76,7 @@ export default function RegisterPage() {
         <main className="flex min-h-screen items-center justify-center text-white p-4">
             <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-2xl border border-gray-700">
                 <h1 className="text-3xl font-bold text-center text-purple-400 mb-6">Зареєструватись</h1>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" aria-label="registration form">
                     <div>
                         <label htmlFor="name" className="block text-gray-300 text-sm font-bold mb-2">Ім&#39;я:</label>
                         <input
@@ -114,7 +117,8 @@ export default function RegisterPage() {
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-900"
-                                style={{ bottom: '12px' }} // Регулювання позиції кнопки
+                                style={{ bottom: '12px' }}
+                                aria-label={showPassword ? 'Сховати пароль' : 'Показати пароль'}
                             >
                                 <FontAwesomeIcon icon={showPassword ? faEye : faEyeSlash} />
                             </button>
@@ -136,19 +140,20 @@ export default function RegisterPage() {
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-900"
-                                style={{ bottom: '12px' }} // Регулювання позиції кнопки
+                                style={{ bottom: '12px' }}
+                                aria-label={showConfirmPassword ? 'Сховати пароль' : 'Показати пароль'}
                             >
                                 <FontAwesomeIcon icon={showConfirmPassword ? faEye : faEyeSlash} />
                             </button>
                         </div>
                     </div>
                     {error && (
-                        <div className="bg-red-500 text-white p-3 rounded mb-4 text-center">
+                        <div role="alert" className="bg-red-500 text-white p-3 rounded mb-4 text-center" data-testid="error-message">
                             {error}
                         </div>
                     )}
                     {success && (
-                        <div className="bg-green-500 text-white p-3 rounded mb-4 text-center">
+                        <div role="alert" className="bg-green-500 text-white p-3 rounded mb-4 text-center" data-testid="success-message">
                             {success}
                         </div>
                     )}
@@ -156,6 +161,7 @@ export default function RegisterPage() {
                         type="submit"
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 disabled:opacity-50"
                         disabled={isLoading}
+                        aria-busy={isLoading}
                     >
                         {isLoading ? 'Реєстрація...' : 'Зареєструватись'}
                     </button>

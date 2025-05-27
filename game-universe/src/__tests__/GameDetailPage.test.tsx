@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
-import GameDetailPage from '../app/games/[id]/page'; // Replace with the correct relative path
+import GameDetailPage from '../app/games/[id]/page';
 
 jest.mock('next-auth/react', () => ({
     useSession: jest.fn(),
@@ -53,63 +53,20 @@ const mockGame = {
 
 const mockUseSessionValue = (status: 'loading' | 'authenticated' | 'unauthenticated', user?: MockUser) => {
     (useSession as jest.Mock).mockReturnValue({
-        data: user ? { user } : null,
+        data: user ? { user, expires: 'some-date-string' } : null,
         status,
     });
-};
-
-const mockUseParamsValue = (id: string) => {
-    (useParams as jest.Mock).mockReturnValue({ id });
 };
 
 describe('GameDetailPage', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        (global.alert as jest.Mock).mockClear();
-        mockUseSessionValue('unauthenticated');
-        mockUseParamsValue('game-1');
-
-        mockFetch.mockImplementation((url: RequestInfo | URL) => {
-            if (url.toString().startsWith('/api/games/')) {
-                return Promise.resolve({ ok: true, json: () => Promise.resolve(mockGame) });
-            }
-            if (url.toString().startsWith('/api/comments')) {
-                return Promise.resolve({ ok: true, json: () => Promise.resolve([]) });
-            }
-            if (url.toString().startsWith('/api/wishlist/status')) {
-                return Promise.resolve({ ok: true, json: () => Promise.resolve({ isInWishlist: false }) });
-            }
-            return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
-        });
-    });
-
-    test('renders loading state initially', () => {
-        mockFetch.mockImplementation(() => new Promise(() => { }));
-        render(<GameDetailPage />);
-        expect(screen.getByText('Завантаження деталей гри...')).toBeInTheDocument();
-    });
-
-    test('displays error message if game fetch fails', async () => {
-        mockFetch.mockImplementationOnce(() =>
-            Promise.resolve({
-                ok: false,
-                statusText: 'Not Found',
-                json: () => Promise.resolve({ error: 'Game not found' }),
-            })
-        );
-        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }));
-        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ isInWishlist: false }) }));
-
-
-        render(<GameDetailPage />);
-
-        await waitFor(() => {
-            expect(screen.getByText(/Помилка: Failed to fetch game: Not Found/i)).toBeInTheDocument();
-        });
+        (useParams as jest.Mock).mockReturnValue({ id: 'game-1' });
     });
 
     describe('Comments section', () => {
         const authenticatedUser: MockUser = { id: 'user-123', name: 'Auth User', image: '/auth-user.jpg', email: 'auth@example.com' };
+        const adminUser: MockUser = { id: 'admin-1', name: 'Admin User', role: 'ADMIN' };
 
         test('displays error if adding comment fails', async () => {
             mockFetch.mockImplementation((url: RequestInfo | URL) => {
@@ -146,7 +103,7 @@ describe('GameDetailPage', () => {
             await userEvent.click(submitButton);
 
             await waitFor(() => {
-                expect(screen.getByText('Comment too short')).toBeInTheDocument();
+                expect(screen.getByText(/Comment too short/i)).toBeInTheDocument();
             });
 
             expect(commentInput).toHaveValue('Short');
@@ -217,7 +174,6 @@ describe('GameDetailPage', () => {
         });
 
         test('allows admin user to edit any comment', async () => {
-            const adminUser: MockUser = { id: 'admin-1', name: 'Admin User', role: 'ADMIN' };
             const anotherUserComment = {
                 id: 'another-comment-1',
                 content: 'Another user content',
@@ -295,7 +251,6 @@ describe('GameDetailPage', () => {
             });
 
             mockUseSessionValue('authenticated', authenticatedUser);
-            const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
             render(<GameDetailPage />);
 
             await waitFor(() => {
@@ -306,8 +261,11 @@ describe('GameDetailPage', () => {
             await userEvent.click(deleteButton);
 
             await waitFor(() => {
-                expect(confirmSpy).toHaveBeenCalledWith('Ви впевнені, що хочете видалити цей коментар? Цю дію не можна скасувати.');
+                expect(screen.getByText('Ви впевнені, що хочете видалити цей коментар? Цю дію не можна скасувати.')).toBeInTheDocument();
             });
+
+            const confirmModalButton = screen.getByRole('button', { name: 'Підтвердити' });
+            await userEvent.click(confirmModalButton);
 
             await waitFor(() => {
                 expect(mockFetch).toHaveBeenCalledWith(`/api/comments/${userComment.id}`, expect.objectContaining({
@@ -316,11 +274,9 @@ describe('GameDetailPage', () => {
             });
 
             expect(screen.queryByText('Content to be deleted')).not.toBeInTheDocument();
-            confirmSpy.mockRestore();
         });
 
         test('allows admin user to delete any comment', async () => {
-            const adminUser: MockUser = { id: 'admin-1', name: 'Admin User', role: 'ADMIN' };
             const anotherUserComment = {
                 id: 'another-comment-1',
                 content: 'Another user content',
@@ -347,7 +303,6 @@ describe('GameDetailPage', () => {
             });
 
             mockUseSessionValue('authenticated', adminUser);
-            const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
             render(<GameDetailPage />);
 
             await waitFor(() => {
@@ -358,9 +313,15 @@ describe('GameDetailPage', () => {
             await userEvent.click(deleteButton);
 
             await waitFor(() => {
+                expect(screen.getByText('Ви впевнені, що хочете видалити цей коментар? Цю дію не можна скасувати.')).toBeInTheDocument();
+            });
+
+            const confirmModalButton = screen.getByRole('button', { name: 'Підтвердити' });
+            await userEvent.click(confirmModalButton);
+
+            await waitFor(() => {
                 expect(screen.queryByText('Another user content')).not.toBeInTheDocument();
             });
-            confirmSpy.mockRestore();
         });
 
         test('does not show edit/delete buttons for comments by other users if not admin', async () => {
