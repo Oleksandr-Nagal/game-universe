@@ -12,6 +12,7 @@ const defaultAvatars = [
     '/avatars/avatar5.png',
 ];
 
+// Ensure the component is exported
 export function AvatarEditor({ currentImage }: { currentImage: string | null }) {
     const { data: session, update } = useSession();
     const [isUpdating, setIsUpdating] = useState(false);

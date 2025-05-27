@@ -1,11 +1,25 @@
-//src/app/games/[id]/page.tsx
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { Session } from 'next-auth';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { UserRole } from '@prisma/client';
+
+interface CustomUser {
+    id: string;
+    name?: string | null;
+    image?: string | null;
+    email?: string | null;
+    role: UserRole;
+    provider?: string;
+}
+
+interface CustomSession extends Session {
+    user: CustomUser;
+}
 
 interface Game {
     id: string;
@@ -35,7 +49,7 @@ interface Comment {
 
 export default function GameDetailPage() {
     const { id } = useParams();
-    const { data: session, status } = useSession();
+    const { data: session, status } = useSession() as { data: CustomSession | null, status: 'loading' | 'authenticated' | 'unauthenticated' };
     const [game, setGame] = useState<Game | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -203,8 +217,8 @@ export default function GameDetailPage() {
 
             if (res.ok) {
                 const addedComment: Comment = await res.json();
-                const userRes = await fetch(`/api/users/${session.user.id}`);
-                const userData = userRes.ok ? await userRes.json() : null;
+                const userRes = session.user?.id ? await fetch(`/api/users/${session.user.id}`) : null;
+                const userData = userRes?.ok ? await userRes.json() : null;
 
                 setComments(prev => [
                     {
@@ -348,6 +362,11 @@ export default function GameDetailPage() {
                         />
                     </div>
                 )}
+                {!game.imageUrl && (
+                    <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden shadow-lg bg-gray-700 flex items-center justify-center text-gray-400 text-xl">
+                        Зображення недоступне
+                    </div>
+                )}
 
                 <div className="mb-6 bg-gray-700/70 p-4 rounded-lg border border-gray-600">
                     <h2 className="text-2xl font-semibold text-white mb-3">Опис гри</h2>
@@ -358,26 +377,42 @@ export default function GameDetailPage() {
                     <p className="text-gray-400">
                         <span className="font-semibold text-white">Дата випуску:</span> {new Date(game.releaseDate).toLocaleDateString()}
                     </p>
-                    {game.developer?.name && (
+                    {game.developer?.name ? (
                         <p className="text-gray-400">
                             <span className="font-semibold text-white">Розробник:</span> {game.developer.name}
                         </p>
+                    ) : (
+                        <p className="text-gray-400">
+                            <span className="font-semibold text-white">Розробник:</span> Невідомо
+                        </p>
                     )}
-                    {game.publisher?.name && (
+                    {game.publisher?.name ? (
                         <p className="text-gray-400">
                             <span className="font-semibold text-white">Видавець:</span> {game.publisher.name}
                         </p>
+                    ) : (
+                        <p className="text-gray-400">
+                            <span className="font-semibold text-white">Видавець:</span> Невідомо
+                        </p>
                     )}
-                    {Array.isArray(game.genres) && game.genres.length > 0 && (
+                    {Array.isArray(game.genres) && game.genres.length > 0 ? (
                         <p className="text-gray-400">
                             <span className="font-semibold text-white">Жанри:</span>{' '}
                             {game.genres.map((g) => g.genre.name).join(', ')}
                         </p>
+                    ) : (
+                        <p className="text-gray-400">
+                            <span className="font-semibold text-white">Жанри:</span> Невідомо
+                        </p>
                     )}
-                    {Array.isArray(game.platforms) && game.platforms.length > 0 && (
+                    {Array.isArray(game.platforms) && game.platforms.length > 0 ? (
                         <p className="text-gray-400">
                             <span className="font-semibold text-white">Платформи:</span>{' '}
                             {game.platforms.map((p) => p.platform.name).join(', ')}
+                        </p>
+                    ) : (
+                        <p className="text-gray-400">
+                            <span className="font-semibold text-white">Платформи:</span> Невідомо
                         </p>
                     )}
                 </div>
@@ -395,11 +430,10 @@ export default function GameDetailPage() {
                 )}
                 {status === 'unauthenticated' && (
                     <p className="text-center text-gray-400 mt-4">
-                        <Link href="/auth/signin" className="text-blue-400 hover:underline">Увійдіть</Link>, щоб додати до списку бажань.
+                        <Link href="/auth/signin" className="text-blue-400 hover:underline">Увійти</Link>, щоб додати до списку бажань.
                     </p>
                 )}
 
-                {/* Comments Section */}
                 <section className="mt-10 p-6 bg-gray-700/70 rounded-lg shadow-inner border border-gray-600 backdrop-blur-sm">
                     <h2 className="text-3xl font-bold text-yellow-300 mb-6 text-center">Коментарі</h2>
 
@@ -424,7 +458,7 @@ export default function GameDetailPage() {
                         </form>
                     ) : (
                         <p className="text-center text-gray-400 mb-8">
-                            <Link href="/auth/signin" className="text-blue-400 hover:underline">Увійдіть</Link>, щоб залишити коментар.
+                            <Link href="/auth/signin" className="text-blue-400 hover:underline">Увійти</Link>, щоб залишити коментар.
                         </p>
                     )}
 

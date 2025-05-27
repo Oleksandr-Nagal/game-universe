@@ -1,7 +1,45 @@
 // src/app/page.test.tsx
 import { render, screen } from '@testing-library/react';
-import HomeContent from './components/HomeContent';
 import '@testing-library/jest-dom';
+import HomeContent from '../app/components/HomeContent';
+
+const mockNextAuthReact = {
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    useSession: jest.fn(),
+};
+
+const mockAuth = {
+    authOptions: {},
+    getServerSession: jest.fn(),
+};
+
+const mockNextNavigation = {
+    redirect: jest.fn(),
+};
+
+const mockPrismaClient = {
+    user: {
+        count: jest.fn(),
+    },
+    game: {
+        count: jest.fn(),
+    },
+    comment: {
+        count: jest.fn(),
+    },
+};
+
+const mockSentry = {
+    captureException: jest.fn(),
+    init: jest.fn(),
+};
+
+jest.mock('@/lib/auth', () => mockAuth);
+jest.mock('next-auth/react', () => mockNextAuthReact);
+jest.mock('next/navigation', () => mockNextNavigation);
+jest.mock('@/lib/prisma', () => ({ prisma: mockPrismaClient }));
+jest.mock('@sentry/nextjs', () => mockSentry);
 
 describe('HomeContent component', () => {
     it('renders guest links when unauthenticated', () => {

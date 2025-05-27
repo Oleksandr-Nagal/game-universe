@@ -1,4 +1,4 @@
-import { AuthOptions } from 'next-auth';
+import { AuthOptions, Account, User as DefaultUser, Session } from 'next-auth'; // Added Session import
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GitHubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
@@ -6,12 +6,20 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
+import { JWT } from 'next-auth/jwt';
 
 if (!process.env.GITHUB_ID) throw new Error('GITHUB_ID is not set');
 if (!process.env.GITHUB_SECRET) throw new Error('GITHUB_SECRET is not set');
 if (!process.env.GOOGLE_CLIENT_ID) throw new Error('GOOGLE_CLIENT_ID is not set');
 if (!process.env.GOOGLE_CLIENT_SECRET) throw new Error('GOOGLE_CLIENT_SECRET is not set');
 if (!process.env.NEXTAUTH_SECRET) throw new Error('NEXTAUTH_SECRET is not set');
+
+// Define a custom User type to include 'id' and 'role'
+// DefaultUser already includes name, email, and image.
+interface CustomUser extends DefaultUser {
+    id: string;
+    role: UserRole;
+}
 
 export const authOptions: AuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -56,13 +64,19 @@ export const authOptions: AuthOptions = {
         strategy: 'jwt',
     },
     callbacks: {
-        async jwt({ token, user, account, trigger}) {
+        async jwt({ token, user, account, trigger }: {
+            token: JWT;
+            user?: DefaultUser;
+            account?: Account | null;
+            trigger?: 'signIn' | 'signUp' | 'update';
+        }) {
             if (user) {
-                token.id = user.id;
-                token.role = user.role;
-                token.name = user.name;
-                token.email = user.email;
-                token.image = user.image;
+                const customUser = user as CustomUser;
+                token.id = customUser.id;
+                token.role = customUser.role;
+                token.name = customUser.name;
+                token.email = customUser.email;
+                token.image = customUser.image;
             }
 
             if (trigger === 'update' && token.id) {
@@ -89,7 +103,7 @@ export const authOptions: AuthOptions = {
             }
             return token;
         },
-        async session({ session, token }) {
+        async session({ session, token }: { session: Session; token: JWT }) { // Changed 'any' to 'Session'
             if (session.user) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as UserRole;

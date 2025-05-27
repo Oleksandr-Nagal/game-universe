@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { Navbar } from './Navbar';
+import { Navbar } from '@/app/components/Navbar';
 
-// Явна типізація для моків
 const mockSignIn: jest.Mock<void, [Record<string, unknown>?]> = jest.fn();
 const mockSignOut: jest.Mock<void, [Record<string, unknown>?]> = jest.fn();
 const mockUseSession: jest.Mock<
@@ -19,7 +18,7 @@ jest.mock('next-auth/react', () => ({
 
 describe('Navbar', () => {
     beforeEach(() => {
-        jest.clearAllMocks(); // Скидання моків між тестами
+        jest.clearAllMocks();
     });
 
     it('renders correctly', () => {
@@ -45,7 +44,6 @@ describe('Navbar', () => {
         });
         render(<Navbar />);
 
-        // Гнучкий збіг для тексту
         expect(
             screen.getByText((content) => content.includes('Hello, Test User'))
         ).toBeInTheDocument(); // Перевірка тексту
@@ -59,7 +57,6 @@ describe('Navbar', () => {
         });
         render(<Navbar />);
 
-        // Для перевірки тексту використовуємо match через функцію
         expect(
             screen.getByText((content) => content.includes('Hello, Admin User'))
         ).toBeInTheDocument();

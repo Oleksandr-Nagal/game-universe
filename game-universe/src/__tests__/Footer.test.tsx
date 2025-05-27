@@ -1,7 +1,7 @@
 // src/app/components/Footer.test.tsx
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Footer } from './Footer';
+import { Footer } from '@/app/components/Footer';
 
 
 jest.mock('@fortawesome/react-fontawesome', () => ({
