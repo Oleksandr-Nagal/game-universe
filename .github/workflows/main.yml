@@ -22,18 +22,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          # Правильне налаштування для вказівки шляху до lock-файлу для кешування
           cache-dependency-path: ./game-universe/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
         working-directory: ./game-universe
-
-      # Optional: Check code formatting with Prettier
-      # Make sure you have "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"" in your package.json scripts
-      # - name: Check Code Formatting
-      #   run: npm run format:check
-      #   working-directory: ./game-universe # Якщо розкоментуєте, додайте working-directory
 
       - name: Run ESLint
         run: npm run lint
@@ -42,12 +35,24 @@ jobs:
       - name: Run Tests with Coverage
         run: npm run test:coverage
         working-directory: ./game-universe
+        env:
+          GITHUB_ID: ${{ secrets.GITHUB_ID }}
+          GITHUB_SECRET: ${{ secrets.GITHUB_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }} # Ensure this is also set if used in auth.ts
 
       - name: Build Project
         run: npm run build
         working-directory: ./game-universe
         env:
-          NODE_ENV: production # Явно вказуємо продакшн середовище для збірки
+          NODE_ENV: production
+          # Add environment variables needed for build if they are different from test
+          GITHUB_ID: ${{ secrets.GITHUB_ID }}
+          GITHUB_SECRET: ${{ secrets.GITHUB_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -58,14 +63,15 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          # Add all necessary environment variables for Vercel deployment here
+          GITHUB_ID: ${{ secrets.GITHUB_ID }}
+          GITHUB_SECRET: ${{ secrets.GITHUB_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }} # Also crucial for deployment
         working-directory: ./game-universe
 
       - name: Run Lighthouse CI Audit
         uses: treosh/lighthouse-ci-action@v11
         with:
-          urls: https://game-universe.vercel.app # Ваш продакшн URL для аудиту
-#          minAutopassScore: 90
-          # configPath: ./lighthouserc.json # Розкоментуйте, якщо ви використовуєте власну конфігурацію Lighthouse
-        env:
-          LHCI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # LHCI_TOKEN: ${{ secrets.LHCI_TOKEN }} # Розкоментуйте, якщо ви надсилаєте звіти на LHCI сервер
+          urls: https://game-universe.vercel.app
