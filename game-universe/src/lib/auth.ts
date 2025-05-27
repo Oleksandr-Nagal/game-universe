@@ -1,4 +1,6 @@
-import { AuthOptions, Account, User as DefaultUser, Session } from 'next-auth'; // Added Session import
+// src/lib/auth.ts
+
+import { AuthOptions, Account, User as DefaultUser, Session } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GitHubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
@@ -8,14 +10,6 @@ import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
 import { JWT } from 'next-auth/jwt';
 
-if (!process.env.GITHUB_ID) throw new Error('GITHUB_ID is not set');
-if (!process.env.GITHUB_SECRET) throw new Error('GITHUB_SECRET is not set');
-if (!process.env.GOOGLE_CLIENT_ID) throw new Error('GOOGLE_CLIENT_ID is not set');
-if (!process.env.GOOGLE_CLIENT_SECRET) throw new Error('GOOGLE_CLIENT_SECRET is not set');
-if (!process.env.NEXTAUTH_SECRET) throw new Error('NEXTAUTH_SECRET is not set');
-
-// Define a custom User type to include 'id' and 'role'
-// DefaultUser already includes name, email, and image.
 interface CustomUser extends DefaultUser {
     id: string;
     role: UserRole;
@@ -52,12 +46,12 @@ export const authOptions: AuthOptions = {
             },
         }),
         GitHubProvider({
-            clientId: process.env.GITHUB_ID,
-            clientSecret: process.env.GITHUB_SECRET,
+            clientId: process.env.GITHUB_ID as string,
+            clientSecret: process.env.GITHUB_SECRET as string,
         }),
         GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            clientId: process.env.GOOGLE_CLIENT_ID as string,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
         }),
     ],
     session: {
@@ -103,7 +97,7 @@ export const authOptions: AuthOptions = {
             }
             return token;
         },
-        async session({ session, token }: { session: Session; token: JWT }) { // Changed 'any' to 'Session'
+        async session({ session, token }: { session: Session; token: JWT }) {
             if (session.user) {
                 session.user.id = token.id as string;
                 session.user.role = token.role as UserRole;
@@ -119,5 +113,5 @@ export const authOptions: AuthOptions = {
         signIn: '/auth/signin',
         error: '/auth/error',
     },
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET as string,
 };
