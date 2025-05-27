@@ -58,8 +58,7 @@ jobs:
         working-directory: ./game-universe
 
       - name: Deploy to Vercel Production
-        working-directory: ./game-universe
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --cwd=./game-universe --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
