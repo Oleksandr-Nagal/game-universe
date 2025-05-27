@@ -3,23 +3,40 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
-import GameDetailPage from '../app/games/[id]/page';
-import { useSession } from 'next-auth/react'; // Direct import
-import { useParams } from 'next/navigation'; // Direct import
+import GameDetailPage from '../app/games/[id]/page'; // Replace with the correct relative path
 
-// Mock window.alert to prevent "Not implemented" errors in tests
+jest.mock('next-auth/react', () => ({
+    useSession: jest.fn(),
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+}));
+
+jest.mock('next/navigation', () => ({
+    useParams: jest.fn(),
+    useSearchParams: jest.fn(() => new URLSearchParams()),
+    usePathname: jest.fn(() => '/'),
+    useRouter: jest.fn(() => ({
+        push: jest.fn(),
+        replace: jest.fn(),
+        back: jest.fn(),
+        prefetch: jest.fn(),
+    })),
+}));
+
+import { useSession } from 'next-auth/react';
+import { useParams } from 'next/navigation';
+
 global.alert = jest.fn();
 
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Define a type for the user object to avoid 'any'
 interface MockUser {
     id: string;
     name: string;
     image?: string;
     email?: string;
-    role?: string; // 'USER' | 'ADMIN'
+    role?: string;
 }
 
 const mockGame = {
@@ -34,23 +51,23 @@ const mockGame = {
     platforms: [{ platform: { name: 'PC' } }, { platform: { name: 'PS5' } }],
 };
 
-const mockUseSession = (status: 'loading' | 'authenticated' | 'unauthenticated', user?: MockUser) => {
-    (useSession as jest.Mock).mockReturnValue({ // Use directly imported useSession
+const mockUseSessionValue = (status: 'loading' | 'authenticated' | 'unauthenticated', user?: MockUser) => {
+    (useSession as jest.Mock).mockReturnValue({
         data: user ? { user } : null,
         status,
     });
 };
 
-const mockUseParams = (id: string) => {
-    (useParams as jest.Mock).mockReturnValue({ id }); // Use directly imported useParams
+const mockUseParamsValue = (id: string) => {
+    (useParams as jest.Mock).mockReturnValue({ id });
 };
 
 describe('GameDetailPage', () => {
     beforeEach(() => {
-        jest.clearAllMocks(); // Clear all mocks including useSession and useParams
-        (global.alert as jest.Mock).mockClear(); // Clear mock for alert
-        mockUseSession('unauthenticated');
-        mockUseParams('game-1');
+        jest.clearAllMocks();
+        (global.alert as jest.Mock).mockClear();
+        mockUseSessionValue('unauthenticated');
+        mockUseParamsValue('game-1');
 
         mockFetch.mockImplementation((url: RequestInfo | URL) => {
             if (url.toString().startsWith('/api/games/')) {
@@ -80,9 +97,8 @@ describe('GameDetailPage', () => {
                 json: () => Promise.resolve({ error: 'Game not found' }),
             })
         );
-        // Ensure other fetches also return a resolved promise to avoid unexpected errors
-        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) })); // for comments
-        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ isInWishlist: false }) })); // for wishlist status
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve([]) }));
+        mockFetch.mockImplementationOnce(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ isInWishlist: false }) }));
 
 
         render(<GameDetailPage />);
@@ -93,7 +109,6 @@ describe('GameDetailPage', () => {
     });
 
     describe('Comments section', () => {
-        // Moved authenticatedUser inside this describe block
         const authenticatedUser: MockUser = { id: 'user-123', name: 'Auth User', image: '/auth-user.jpg', email: 'auth@example.com' };
 
         test('displays error if adding comment fails', async () => {
@@ -117,7 +132,7 @@ describe('GameDetailPage', () => {
                 return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
             });
 
-            mockUseSession('authenticated', authenticatedUser);
+            mockUseSessionValue('authenticated', authenticatedUser);
             render(<GameDetailPage />);
 
             await waitFor(() => {
@@ -170,7 +185,7 @@ describe('GameDetailPage', () => {
                 return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
             });
 
-            mockUseSession('authenticated', authenticatedUser);
+            mockUseSessionValue('authenticated', authenticatedUser);
             render(<GameDetailPage />);
 
             await waitFor(() => {
@@ -231,7 +246,7 @@ describe('GameDetailPage', () => {
                 return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
             });
 
-            mockUseSession('authenticated', adminUser);
+            mockUseSessionValue('authenticated', adminUser);
             render(<GameDetailPage />);
 
             await waitFor(() => {
@@ -279,7 +294,7 @@ describe('GameDetailPage', () => {
                 return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
             });
 
-            mockUseSession('authenticated', authenticatedUser);
+            mockUseSessionValue('authenticated', authenticatedUser);
             const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
             render(<GameDetailPage />);
 
@@ -331,7 +346,7 @@ describe('GameDetailPage', () => {
                 return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
             });
 
-            mockUseSession('authenticated', adminUser);
+            mockUseSessionValue('authenticated', adminUser);
             const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
             render(<GameDetailPage />);
 
@@ -372,7 +387,7 @@ describe('GameDetailPage', () => {
                 return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
             });
 
-            mockUseSession('authenticated', regularUser);
+            mockUseSessionValue('authenticated', regularUser);
             render(<GameDetailPage />);
 
             await waitFor(() => {
@@ -406,7 +421,7 @@ describe('GameDetailPage', () => {
                 return Promise.reject(new Error(`Unexpected fetch call: ${url}`));
             });
 
-            mockUseSession('authenticated', authenticatedUser);
+            mockUseSessionValue('authenticated', authenticatedUser);
             render(<GameDetailPage />);
 
             await waitFor(() => {
