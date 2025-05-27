@@ -1,3 +1,18 @@
+// src/__tests__/route.test.ts
+
+// Mock process.env before any imports that might depend on it
+jest.mock('process', () => ({
+    ...jest.requireActual('process'),
+    env: {
+        ...jest.requireActual('process').env,
+        GITHUB_ID: 'mock_github_id',
+        GITHUB_SECRET: 'mock_github_secret',
+        GOOGLE_CLIENT_ID: 'mock_google_client_id',
+        GOOGLE_CLIENT_SECRET: 'mock_google_client_secret',
+        // Add any other environment variables your auth.ts might be checking
+    },
+}));
+
 import { PATCH, DELETE } from '@/app/api/comments/[id]/route';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
