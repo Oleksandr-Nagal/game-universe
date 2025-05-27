@@ -1,14 +1,15 @@
-'use client'; // <-- Ця директива робить компонент клієнтським
+'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { Session } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AvatarEditor } from '../components/AvatarEditor'; // Залишаємо AvatarEditor, якщо він є клієнтським
+import { AvatarEditor } from '../components/AvatarEditor';
 
 export default function ProfilePage() {
-    const { data: session, status, update } = useSession(); // Отримуємо `update` з useSession
+    const { data: session, status, update } = useSession();
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [userName, setUserName] = useState(session?.user?.name || '');
@@ -16,12 +17,16 @@ export default function ProfilePage() {
     const [nameError, setNameError] = useState<string | null>(null);
     const [nameSuccess, setNameSuccess] = useState<string | null>(null);
 
-    // Оновлюємо локальний стан `userName` при зміні сесії
     useEffect(() => {
         if (session?.user?.name) {
             setUserName(session.user.name);
         }
     }, [session?.user?.name]);
+
+    const updateSessionAction = useCallback(
+        (data?: Partial<Session['user']> | undefined) => update(data),
+        [update]
+    );
 
     if (status === 'loading') {
         return (
@@ -35,7 +40,6 @@ export default function ProfilePage() {
         redirect('/auth/signin');
     }
 
-    // `user` беремо напряму з сесії, яка вже завантажена
     const user = session.user;
 
     const handleSaveName = async () => {
@@ -44,20 +48,19 @@ export default function ProfilePage() {
         setLoadingNameUpdate(true);
 
         if (!userName.trim()) {
-            setNameError('Ім&#39;я не може бути порожнім.'); // ВИПРАВЛЕНО ТУТ
+            setNameError('Ім&#39;я не може бути порожнім.');
             setLoadingNameUpdate(false);
             return;
         }
 
         if (userName.trim() === user.name) {
-            setNameError('Ім&#39;я не змінилося.'); // ВИПРАВЛЕНО ТУТ
+            setNameError('Ім&#39;я не змінилося.');
             setLoadingNameUpdate(false);
             return;
         }
 
         try {
             const res = await fetch('/api/user', {
-                // Використовуємо той самий API-ендпоінт, що був створений раніше
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,13 +69,12 @@ export default function ProfilePage() {
             });
 
             if (res.ok) {
-                // Оновлюємо сесію NextAuth на клієнті
                 await update({ name: userName.trim() });
-                setNameSuccess('Ім&#39;я успішно оновлено!'); // ВИПРАВЛЕНО ТУТ
+                setNameSuccess('Ім&#39;я успішно оновлено!');
                 setIsEditingName(false);
             } else {
                 const errorData = await res.json();
-                setNameError(errorData.error || 'Не вдалося оновити ім&#39;я.'); // ВИПРАВЛЕНО ТУТ
+                setNameError(errorData.error || 'Не вдалося оновити ім&#39;я.');
             }
         } catch (err) {
             console.error('Помилка оновлення імені:', err);
@@ -162,7 +164,7 @@ export default function ProfilePage() {
                     )}
                 </div>
 
-                <AvatarEditor currentImage={user.image ?? null} />
+                <AvatarEditor currentImage={user.image ?? null} updateSessionAction={updateSessionAction} />
 
                 <section className="mt-10 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
                     <h3 className="text-2xl font-bold text-green-400 mb-4 text-center">Мої Ігрові Дані</h3>
