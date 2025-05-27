@@ -2,14 +2,23 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
-
 export async function POST(request: Request) {
     try {
         const { name, email, password } = await request.json();
 
+        const MIN_NAME_LENGTH = 3;
+        const MAX_NAME_LENGTH = 50;
+
         if (!email || !password) {
             return NextResponse.json(
-                { error: 'Електронна пошта та пароль є обов&#39;язковими.' },
+                { error: 'Електронна пошта та пароль є обов\'язковими.' },
+                { status: 400 }
+            );
+        }
+
+        if (name && (typeof name !== 'string' || name.trim().length < MIN_NAME_LENGTH || name.trim().length > MAX_NAME_LENGTH)) {
+            return NextResponse.json(
+                { error: `Ім'я повинно містити від ${MIN_NAME_LENGTH} до ${MAX_NAME_LENGTH} символів.` },
                 { status: 400 }
             );
         }
@@ -29,7 +38,7 @@ export async function POST(request: Request) {
 
         const newUser = await prisma.user.create({
             data: {
-                name: name || null,
+                name: name ? name.trim() : null,
                 email,
                 password: hashedPassword,
                 role: UserRole.USER,

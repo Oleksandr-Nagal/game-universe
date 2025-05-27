@@ -1,4 +1,3 @@
-// src/lib/auth.ts
 import { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GitHubProvider from 'next-auth/providers/github';
@@ -8,21 +7,11 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
 
-if (!process.env.GITHUB_ID) {
-    throw new Error('GITHUB_ID is not set in environment variables');
-}
-if (!process.env.GITHUB_SECRET) {
-    throw new Error('GITHUB_SECRET is not set in environment variables');
-}
-if (!process.env.GOOGLE_CLIENT_ID) {
-    throw new Error('GOOGLE_CLIENT_ID is not set in environment variables');
-}
-if (!process.env.GOOGLE_CLIENT_SECRET) {
-    throw new Error('GOOGLE_CLIENT_SECRET is not set in environment variables');
-}
-if (!process.env.NEXTAUTH_SECRET) {
-    throw new Error('NEXTAUTH_SECRET is not set in environment variables. Please generate a strong secret.');
-}
+if (!process.env.GITHUB_ID) throw new Error('GITHUB_ID is not set');
+if (!process.env.GITHUB_SECRET) throw new Error('GITHUB_SECRET is not set');
+if (!process.env.GOOGLE_CLIENT_ID) throw new Error('GOOGLE_CLIENT_ID is not set');
+if (!process.env.GOOGLE_CLIENT_SECRET) throw new Error('GOOGLE_CLIENT_SECRET is not set');
+if (!process.env.NEXTAUTH_SECRET) throw new Error('NEXTAUTH_SECRET is not set');
 
 export const authOptions: AuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -37,21 +26,14 @@ export const authOptions: AuthOptions = {
                 if (!credentials?.email || !credentials.password) {
                     throw new Error('Please enter email and password.');
                 }
-
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email },
-                });
-
+                const user = await prisma.user.findUnique({ where: { email: credentials.email } });
                 if (!user || !user.password) {
                     throw new Error('Invalid credentials.');
                 }
-
                 const isValidPassword = await bcrypt.compare(credentials.password, user.password);
-
                 if (!isValidPassword) {
                     throw new Error('Invalid credentials.');
                 }
-
                 return {
                     id: user.id,
                     name: user.name,
@@ -74,11 +56,34 @@ export const authOptions: AuthOptions = {
         strategy: 'jwt',
     },
     callbacks: {
-        async jwt({ token, user, account }) {
+        async jwt({ token, user, account, trigger}) {
             if (user) {
                 token.id = user.id;
                 token.role = user.role;
+                token.name = user.name;
+                token.email = user.email;
+                token.image = user.image;
             }
+
+            if (trigger === 'update' && token.id) {
+                const latestUser = await prisma.user.findUnique({
+                    where: { id: token.id as string },
+                    select: {
+                        name: true,
+                        email: true,
+                        image: true,
+                        role: true,
+                    },
+                });
+
+                if (latestUser) {
+                    token.name = latestUser.name;
+                    token.email = latestUser.email;
+                    token.image = latestUser.image;
+                    token.role = latestUser.role;
+                }
+            }
+
             if (account) {
                 token.provider = account.provider;
             }
@@ -89,6 +94,9 @@ export const authOptions: AuthOptions = {
                 session.user.id = token.id as string;
                 session.user.role = token.role as UserRole;
                 session.user.provider = token.provider as string;
+                session.user.name = token.name as string | null | undefined;
+                session.user.email = token.email as string | null | undefined;
+                session.user.image = token.image as string | null | undefined;
             }
             return session;
         },

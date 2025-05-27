@@ -1,4 +1,3 @@
-//game-universe/src/app/profile/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +9,6 @@ import { AvatarEditor } from '../components/AvatarEditor';
 
 export default function ProfilePage() {
     const { data: session, status, update } = useSession();
-
     const [isEditingName, setIsEditingName] = useState(false);
     const [userName, setUserName] = useState(session?.user?.name || '');
     const [loadingNameUpdate, setLoadingNameUpdate] = useState(false);
@@ -18,6 +16,7 @@ export default function ProfilePage() {
     const [nameSuccess, setNameSuccess] = useState<string | null>(null);
 
     useEffect(() => {
+        console.log('ProfilePage: useEffect - session.user.name changed to:', session?.user?.name);
         if (session?.user?.name) {
             setUserName(session.user.name);
         }
@@ -38,18 +37,29 @@ export default function ProfilePage() {
     const user = session.user;
 
     const handleSaveName = async () => {
+        const trimmedName = userName.trim();
+
         setNameError(null);
         setNameSuccess(null);
         setLoadingNameUpdate(true);
 
-        if (!userName.trim()) {
-            setNameError('Ім&#39;я не може бути порожнім.');
+        const MIN_NAME_LENGTH = 3;
+        const MAX_NAME_LENGTH = 50;
+
+        if (!trimmedName) {
+            setNameError("Ім'я не може бути порожнім.");
             setLoadingNameUpdate(false);
             return;
         }
 
-        if (userName.trim() === user.name) {
-            setNameError('Ім&#39;я не змінилося.');
+        if (trimmedName.length < MIN_NAME_LENGTH || trimmedName.length > MAX_NAME_LENGTH) {
+            setNameError(`Ім'я повинно містити від ${MIN_NAME_LENGTH} до ${MAX_NAME_LENGTH} символів.`);
+            setLoadingNameUpdate(false);
+            return;
+        }
+
+        if (trimmedName === user.name) {
+            setNameError("Ім'я не змінилося.");
             setLoadingNameUpdate(false);
             return;
         }
@@ -60,20 +70,23 @@ export default function ProfilePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name: userName.trim() }),
+                body: JSON.stringify({ name: trimmedName }),
             });
 
-            if (res.ok) {
-                await update({ name: userName.trim() });
-                setNameSuccess('Ім&#39;я успішно оновлено!');
-                setIsEditingName(false);
-            } else {
-                const errorData = await res.json();
-                setNameError(errorData.error || 'Не вдалося оновити ім&#39;я.');
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                setNameError(errorData.error || "Не вдалося оновити ім'я.");
+                return;
             }
-        } catch (err) {
-            console.error('Помилка оновлення імені:', err);
-            setNameError('Виникла помилка під час оновлення імені.');
+
+            const updatedSession = await update({ name: trimmedName });
+            console.log('ProfilePage: Session updated after name change:', updatedSession);
+
+            setNameSuccess("Ім'я успішно оновлено!");
+            setIsEditingName(false);
+        } catch (err: unknown) {
+            console.error('Непередбачена помилка оновлення імені:', err);
+            setNameError(err instanceof Error ? err.message : "Виникла непередбачена помилка під час оновлення імені.");
         } finally {
             setLoadingNameUpdate(false);
         }
@@ -95,6 +108,7 @@ export default function ProfilePage() {
                     {user.image && (
                         <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500 shadow-lg mb-4">
                             <Image
+                                key={user.image}
                                 src={user.image}
                                 alt={user.name || 'User Avatar'}
                                 fill
@@ -159,7 +173,7 @@ export default function ProfilePage() {
                     )}
                 </div>
 
-                <AvatarEditor currentImage={user.image ?? null} />
+                <AvatarEditor key={user.image || 'default-avatar'} currentImage={user.image ?? null} />
 
                 <section className="mt-10 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
                     <h3 className="text-2xl font-bold text-green-400 mb-4 text-center">Мої Ігрові Дані</h3>

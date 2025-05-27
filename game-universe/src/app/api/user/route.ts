@@ -1,8 +1,8 @@
-//game-universe/src/app/api/user/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import {prisma} from '@/lib/prisma';
+
 export async function PATCH(req: Request) {
     const session = await getServerSession(authOptions);
 
@@ -12,8 +12,9 @@ export async function PATCH(req: Request) {
 
     const { name } = await req.json();
 
-    if (typeof name !== 'string' || name.trim().length === 0) {
-        return NextResponse.json({ error: 'Invalid name provided' }, { status: 400 });
+    const MAX_NAME_LENGTH = 50;
+    if (typeof name !== 'string' || name.trim().length === 0 || name.trim().length > MAX_NAME_LENGTH) {
+        return NextResponse.json({ error: `Некоректне ім'я. Ім'я не може бути порожнім і має містити щонайбільше ${MAX_NAME_LENGTH} символів.` }, { status: 400 });
     }
 
     try {
@@ -31,6 +32,6 @@ export async function PATCH(req: Request) {
         return NextResponse.json(updatedUser, { status: 200 });
     } catch (error) {
         console.error('Error updating user name:', error);
-        return NextResponse.json({ error: 'Failed to update user name' }, { status: 500 });
+        return NextResponse.json({ error: 'Не вдалося оновити ім\'я користувача' }, { status: 500 });
     }
 }

@@ -1,4 +1,3 @@
-//game-universe/src/app/components/AvatarEditor.tsx
 'use client';
 
 import { useState } from 'react';
@@ -33,7 +32,8 @@ export function AvatarEditor({ currentImage }: { currentImage: string | null }) 
 
             if (res.ok) {
                 const updatedUser = await res.json();
-                await update({ image: updatedUser.image });
+                const updatedSession = await update({ image: updatedUser.image });
+                console.log('AvatarEditor: Session updated after avatar change:', updatedSession);
                 setMessage('Аватар успішно оновлено!');
             } else {
                 const errorData = await res.json();
