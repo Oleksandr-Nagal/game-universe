@@ -22,17 +22,19 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          # cache-dependency-path: ./game-universe/package-lock.json # Якщо package-lock.json знаходиться в корені репо, то './package-lock.json' або просто 'package-lock.json'
-          cache-dependency-path: 'package-lock.json' # Ймовірно, package-lock.json знаходиться в корені вашого репозиторію
+          cache-dependency-path: ./game-universe/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
+        working-directory: ./game-universe
 
       - name: Run ESLint
         run: npm run lint
+        working-directory: ./game-universe
 
       - name: Run Tests with Coverage
         run: npm run test:coverage
+        working-directory: ./game-universe
         env:
           GITHUB_ID: ${{ secrets.GITHUB_ID }}
           GITHUB_SECRET: ${{ secrets.GITHUB_SECRET }}
@@ -46,6 +48,7 @@ jobs:
 
       - name: Build Project
         run: npm run build
+        working-directory: ./game-universe
         env:
           NODE_ENV: production
           GITHUB_ID: ${{ secrets.GITHUB_ID }}
@@ -60,9 +63,10 @@ jobs:
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
+        working-directory: ./game-universe
 
       - name: Deploy to Vercel Production
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} ./
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -75,6 +79,7 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        working-directory: ./game-universe
 
       - name: Run Lighthouse CI Audit
         uses: treosh/lighthouse-ci-action@v11
