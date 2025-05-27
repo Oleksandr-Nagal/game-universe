@@ -1,8 +1,8 @@
+//game-universe/src/app/profile/page.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { Session } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,11 +22,6 @@ export default function ProfilePage() {
             setUserName(session.user.name);
         }
     }, [session?.user?.name]);
-
-    const updateSessionAction = useCallback(
-        (data?: Partial<Session['user']> | undefined) => update(data),
-        [update]
-    );
 
     if (status === 'loading') {
         return (
@@ -164,7 +159,7 @@ export default function ProfilePage() {
                     )}
                 </div>
 
-                <AvatarEditor currentImage={user.image ?? null} updateSessionAction={updateSessionAction} />
+                <AvatarEditor currentImage={user.image ?? null} />
 
                 <section className="mt-10 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
                     <h3 className="text-2xl font-bold text-green-400 mb-4 text-center">Мої Ігрові Дані</h3>

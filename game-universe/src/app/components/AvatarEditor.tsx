@@ -1,31 +1,26 @@
+//game-universe/src/app/components/AvatarEditor.tsx
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { Session } from 'next-auth';
 
-interface AvatarEditorProps {
-    currentImage: string | null;
-    updateSessionAction: (data?: Partial<Session['user']> | undefined) => Promise<Session | null>;
-}
+const defaultAvatars = [
+    '/avatars/avatar1.png',
+    '/avatars/avatar2.png',
+    '/avatars/avatar3.png',
+    '/avatars/avatar4.png',
+    '/avatars/avatar5.png',
+];
 
-export const AvatarEditor: React.FC<AvatarEditorProps> = ({ currentImage, updateSessionAction }) => {
-    const defaultAvatars = [
-        '/avatars/avatar1.png',
-        '/avatars/avatar2.png',
-        '/avatars/avatar3.png',
-        '/avatars/avatar4.png',
-        '/avatars/avatar5.png',
-    ];
+export function AvatarEditor({ currentImage }: { currentImage: string | null }) {
+    const { data: session, update } = useSession();
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-
-    const handleAvatarSelect = async (newImageUrl: string) => {
-        setLoading(true);
-        setError(null);
-        setSuccess(null);
+    const handleSelectAvatar = async (imageUrl: string) => {
+        setMessage(null);
+        setIsUpdating(true);
 
         try {
             const res = await fetch('/api/user/update-avatar', {
@@ -33,75 +28,53 @@ export const AvatarEditor: React.FC<AvatarEditorProps> = ({ currentImage, update
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ imageUrl: newImageUrl }),
+                body: JSON.stringify({ userId: session?.user?.id, imageUrl }),
             });
 
             if (res.ok) {
-                await updateSessionAction({ image: newImageUrl });
-                setSuccess('Аватар успішно оновлено!');
+                const updatedUser = await res.json();
+                await update({ image: updatedUser.image });
+                setMessage('Аватар успішно оновлено!');
             } else {
                 const errorData = await res.json();
-                setError(errorData.error || 'Не вдалося оновити аватар.');
+                setMessage(`Помилка: ${errorData.error || 'Не вдалося оновити аватар.'}`);
             }
-        } catch (err) {
-            console.error('Помилка оновлення аватара:', err);
-            setError('Виникла помилка під час оновлення аватара.');
+        } catch (error) {
+            console.error('Failed to update avatar:', error);
+            setMessage('Помилка сервера при оновленні аватара.');
         } finally {
-            setLoading(false);
+            setIsUpdating(false);
         }
     };
 
     return (
-        <section className="mt-8 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
-            <h3 className="text-2xl font-bold text-blue-400 mb-4 text-center">Змінити Аватар</h3>
-            <p className="text-lg text-gray-300 text-center mb-6">
-                Оберіть новий аватар зі списку за замовчуванням.
-            </p>
-
-            <div className="flex justify-center mb-6">
-                <div className="relative w-24 h-24 rounded-full overflow-hidden border-3 border-purple-400 shadow-lg">
-                    <Image
-                        src={currentImage || '/avatars/default.png'}
-                        alt="Поточний аватар"
-                        fill
-                        sizes="96px"
-                        style={{ objectFit: 'cover' }}
-                        className="rounded-full"
-                    />
-                </div>
-            </div>
-
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 justify-items-center">
-                {defaultAvatars.map((avatarUrl, index) => (
-                    <button
+        <div className="mt-8 p-6 bg-gray-700 rounded-lg shadow-inner border border-gray-600">
+            <h3 className="text-2xl font-bold text-yellow-400 mb-4 text-center">Змінити Аватар</h3>
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
+                {defaultAvatars.map((url, index) => (
+                    <div
                         key={index}
-                        onClick={() => handleAvatarSelect(avatarUrl)}
-                        disabled={loading}
-                        className={`relative w-20 h-20 rounded-full overflow-hidden border-2 transition-all duration-300 ease-in-out
-                                   ${currentImage === avatarUrl ? 'border-green-500 ring-2 ring-green-500' : 'border-gray-500 hover:border-blue-400'}
-                                   ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+                        className={`relative w-20 h-20 rounded-full cursor-pointer overflow-hidden border-2 transition-all duration-200
+                                ${currentImage === url ? 'border-yellow-400 shadow-xl' : 'border-gray-500 hover:border-yellow-300'}`}
+                        onClick={() => handleSelectAvatar(url)}
                     >
                         <Image
-                            src={avatarUrl}
-                            alt={`Аватар ${index + 1}`}
+                            src={url}
+                            alt={`Avatar ${index + 1}`}
                             fill
                             sizes="80px"
                             style={{ objectFit: 'cover' }}
                             className="rounded-full"
                         />
-                    </button>
+                    </div>
                 ))}
             </div>
-
-            {loading && (
-                <p className="text-center text-blue-300 mt-4">Оновлення аватара...</p>
+            {message && (
+                <p className={`text-center mt-4 ${message.includes('Помилка') ? 'text-red-400' : 'text-green-400'}`}>
+                    {message}
+                </p>
             )}
-            {error && (
-                <p className="text-center text-red-400 mt-4">{error}</p>
-            )}
-            {success && (
-                <p className="text-center text-green-400 mt-4">{success}</p>
-            )}
-        </section>
+            {isUpdating && <p className="text-center text-gray-400 mt-2">Оновлення аватара...</p>}
+        </div>
     );
-};
+}
