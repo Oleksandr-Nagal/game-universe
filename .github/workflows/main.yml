@@ -58,7 +58,7 @@ jobs:
         working-directory: ./game-universe
 
       - name: Deploy to Vercel Production
-        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} ./
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} ./game-universe
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -67,7 +67,6 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-        working-directory: ./game-universe
 
       - name: Run Lighthouse CI Audit
         uses: treosh/lighthouse-ci-action@v11
