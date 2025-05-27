@@ -1,15 +1,23 @@
-import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'; // Додано 'within'
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import AdminPage from '../app/admin/page'; // Перевірте шлях до вашого компонента AdminPage
+import AdminPage from '../app/admin/page';
 import React from 'react';
-// import { getServerSession } from '@/lib/auth'; // Цей імпорт більше не потрібен для мокування таким чином
-// import { NextResponse } from 'next/server'; // Цей імпорт більше не потрібен, оскільки він використовується лише в моку
 
-// Оголошуємо змінні для зберігання мок-функцій на рівні модуля, щоб вони були доступні для присвоєння в jest.mock
+
+let mockedRedirectFn: jest.Mock;
+
+jest.mock('next/navigation', () => {
+    const originalModule = jest.requireActual('next/navigation');
+    mockedRedirectFn = jest.fn();
+    return {
+        ...originalModule,
+        redirect: mockedRedirectFn,
+    };
+});
+
 let mockGetServerSession: jest.Mock;
-let mockUseSessionFn: jest.Mock; // Змінено назву, щоб уникнути конфлікту з імпортом useSession
+let mockUseSessionFn: jest.Mock;
 
-// Оголошуємо мок-об'єкт prisma за межами jest.mock
 const mockPrisma = {
     user: {
         findMany: jest.fn(),
@@ -17,26 +25,24 @@ const mockPrisma = {
     },
 };
 
-// Мокуємо залежності
 jest.mock('next-auth/react', () => {
-    mockUseSessionFn = jest.fn(); // Присвоюємо мок-функцію тут
+    mockUseSessionFn = jest.fn();
     return {
         useSession: mockUseSessionFn,
     };
 });
 
 jest.mock('@/lib/auth', () => {
-    mockGetServerSession = jest.fn(); // Присвоюємо мок-функцію тут
+    mockGetServerSession = jest.fn();
     return {
         getServerSession: mockGetServerSession,
     };
 });
 
 jest.mock('@/lib/prisma', () => ({
-    prisma: mockPrisma, // Експортуємо попередньо визначений мок-об'єкт
+    prisma: mockPrisma,
 }));
 
-// Мокуємо next/server для NextResponse
 jest.mock('next/server', () => ({
     NextResponse: {
         json: jest.fn((data) => ({ json: () => Promise.resolve(data) })),
@@ -44,23 +50,21 @@ jest.mock('next/server', () => ({
 }));
 
 describe('AdminPage', () => {
-    // Ці змінні тепер посилаються на моки, оголошені вище
     let mockedUseSession: jest.Mock;
     let mockedGetServerSession: jest.Mock;
     let mockedPrismaUserFindMany: jest.Mock;
     let mockedPrismaUserUpdate: jest.Mock;
+    let mockedRedirect: jest.Mock;
 
     beforeEach(() => {
-        jest.clearAllMocks(); // Очищаємо всі моки перед кожним тестом
+        jest.clearAllMocks();
 
-        // Отримуємо посилання на мок-функції, які були присвоєні в jest.mock
         mockedUseSession = mockUseSessionFn;
         mockedGetServerSession = mockGetServerSession;
-        // Тепер ми можемо безпечно отримати доступ до властивостей mockPrisma
         mockedPrismaUserFindMany = mockPrisma.user.findMany as jest.Mock;
         mockedPrismaUserUpdate = mockPrisma.user.update as jest.Mock;
+        mockedRedirect = mockedRedirectFn;
 
-        // Дефолтні мок-значення для успішного сценарію
         mockedGetServerSession.mockResolvedValue({
             user: { role: 'ADMIN', id: 'admin-id' },
         });
@@ -76,7 +80,6 @@ describe('AdminPage', () => {
         ]);
 
         mockedPrismaUserUpdate.mockImplementation((args) => {
-            // Імітуємо оновлення користувача
             const { where: { id }, data: { role } } = args;
             if (id === 'user1') {
                 return Promise.resolve({ id: 'user1', name: 'User One', email: 'user1@example.com', role });
@@ -89,28 +92,30 @@ describe('AdminPage', () => {
     });
 
     afterEach(() => {
-        cleanup(); // Очищаємо DOM після кожного тесту
+        cleanup();
     });
 
     it('redirects to / if user is not authenticated', async () => {
         mockedGetServerSession.mockResolvedValue(null);
         mockedUseSession.mockReturnValue({ data: null, status: 'unauthenticated' });
 
-        // Мокуємо next/navigation's redirect
-        const { redirect } = require('next/navigation');
-        redirect.mockImplementation(() => {
-            throw new Error('Redirected'); // Кидаємо помилку, щоб зупинити виконання тесту
+        mockedRedirect.mockImplementation(() => {
+            throw new Error('Redirected');
         });
 
         let error: Error | null = null;
         try {
             render(<AdminPage />);
-        } catch (e: any) {
-            error = e;
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                error = e;
+            } else {
+                error = new Error(String(e));
+            }
         }
 
         await waitFor(() => {
-            expect(redirect).toHaveBeenCalledWith('/');
+            expect(mockedRedirect).toHaveBeenCalledWith('/');
             expect(error).toBeInstanceOf(Error);
             expect(error?.message).toBe('Redirected');
         });
@@ -125,21 +130,23 @@ describe('AdminPage', () => {
             status: 'authenticated',
         });
 
-        // Мокуємо next/navigation's redirect
-        const { redirect } = require('next/navigation');
-        redirect.mockImplementation(() => {
-            throw new Error('Redirected'); // Кидаємо помилку, щоб зупинити виконання тесту
+        mockedRedirect.mockImplementation(() => {
+            throw new Error('Redirected');
         });
 
         let error: Error | null = null;
         try {
             render(<AdminPage />);
-        } catch (e: any) {
-            error = e;
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                error = e;
+            } else {
+                error = new Error(String(e));
+            }
         }
 
         await waitFor(() => {
-            expect(redirect).toHaveBeenCalledWith('/');
+            expect(mockedRedirect).toHaveBeenCalledWith('/');
             expect(error).toBeInstanceOf(Error);
             expect(error?.message).toBe('Redirected');
         });
@@ -167,34 +174,29 @@ describe('AdminPage', () => {
     it('allows changing user role', async () => {
         render(<AdminPage />);
 
-        // Чекаємо, поки користувачі завантажаться
         await waitFor(() => {
             expect(screen.getByText('User One')).toBeInTheDocument();
             expect(screen.getByText('User Two')).toBeInTheDocument();
         });
 
-        // Знаходимо кнопку зміни ролі для User One (який є USER)
         const userOneRow = screen.getByText('User One').closest('tr');
         if (!userOneRow) throw new Error('User One row not found');
 
         const changeRoleButton = within(userOneRow).getByRole('button', { name: /Змінити роль/i });
         fireEvent.click(changeRoleButton);
 
-        // Перевіряємо, що Prisma.user.update був викликаний з правильними аргументами
         await waitFor(() => {
             expect(mockedPrismaUserUpdate).toHaveBeenCalledWith({
                 where: { id: 'user1' },
-                data: { role: 'ADMIN' }, // Очікуємо, що роль зміниться на ADMIN
+                data: { role: 'ADMIN' },
             });
         });
 
-        // Імітуємо оновлення даних після зміни ролі
         mockedPrismaUserFindMany.mockResolvedValueOnce([
-            { id: 'user1', name: 'User One', email: 'user1@example.com', role: 'ADMIN' }, // Оновлена роль
+            { id: 'user1', name: 'User One', email: 'user1@example.com', role: 'ADMIN' },
             { id: 'user2', name: 'User Two', email: 'user2@example.com', role: 'ADMIN' },
         ]);
 
-        // Перевіряємо, що компонент оновився і відображає нову роль
         await waitFor(() => {
             const updatedUserOneRole = within(userOneRow).getByText('ADMIN');
             expect(updatedUserOneRole).toBeInTheDocument();
@@ -234,13 +236,13 @@ describe('AdminPage', () => {
 
         await waitFor(() => {
             expect(screen.getByText('User One')).toBeInTheDocument();
-            expect(screen.queryByText('User Two')).not.toBeInTheDocument(); // User Two (ADMIN) should be hidden
+            expect(screen.queryByText('User Two')).not.toBeInTheDocument();
         });
 
         fireEvent.change(filterSelect, { target: { value: 'ADMIN' } });
 
         await waitFor(() => {
-            expect(screen.queryByText('User One')).not.toBeInTheDocument(); // User One (USER) should be hidden
+            expect(screen.queryByText('User One')).not.toBeInTheDocument();
             expect(screen.getByText('User Two')).toBeInTheDocument();
         });
 
@@ -275,7 +277,7 @@ describe('AdminPage', () => {
             expect(screen.getByText('User Two')).toBeInTheDocument();
         });
 
-        fireEvent.change(searchInput, { target: { value: '' } }); // Clear search
+        fireEvent.change(searchInput, { target: { value: '' } });
         await waitFor(() => {
             expect(screen.getByText('User One')).toBeInTheDocument();
             expect(screen.getByText('User Two')).toBeInTheDocument();
