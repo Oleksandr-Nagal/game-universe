@@ -1,16 +1,16 @@
-# .github/workflows/main.yml
-name: CI/CD Pipeline
+name: CI/CD Pipeline for Game Universe
 
 on:
   push:
     branches:
-      - main
+      - master  # Тепер реагуємо тільки на 'master'
   pull_request:
     branches:
-      - main
+      - master  # Тепер реагуємо тільки на PR до 'master'
 
 jobs:
-  build_and_test:
+  build_and_test_and_deploy: # Змінена назва Job, щоб відобразити його об'єднану природу
+    name: Build, Test & Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -21,20 +21,43 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
+      # Optional: Check code formatting with Prettier
+      # Make sure you have "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"" in your package.json scripts
+      # - name: Check Code Formatting
+      #   run: npm run format:check
+
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run Tests
-        run: npm test -- --coverage
+      - name: Run Tests with Coverage
+        run: npm run test:coverage # This script uses your jest.config.js for coverage thresholds
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel Production
+        # Цей крок виконується, якщо job 'build_and_test_and_deploy' успішний
+        # і якщо він запущений на гілці 'master' (що вже задано тригером push)
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Run Lighthouse CI Audit
+        # Цей крок виконується після деплою, якщо все пройшло успішно
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: https://game-universe.vercel.app # Ваш продакшн URL для аудиту
+          # minAutopassScore: 90 # Розкоментуйте, щоб встановити мінімальний прохідний бал
+          # configPath: ./lighthouserc.json # Розкоментуйте, якщо ви використовуєте власну конфігурацію Lighthouse
+        env:
+          LHCI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # LHCI_TOKEN: ${{ secrets.LHCI_TOKEN }} # Розкоментуйте, якщо ви надсилаєте звіти на LHCI сервер
