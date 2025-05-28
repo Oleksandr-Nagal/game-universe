@@ -55,14 +55,21 @@ const nextConfig: NextConfig = {
         dangerouslyAllowSVG: true,
     },
 };
+
 export default withSentryConfig(nextConfig, {
 
 org: "ztueduua",
 project: "nextjs-coursework",
+
 authToken: process.env.SENTRY_AUTH_TOKEN,
 silent: !process.env.CI,
+
+
 widenClientFileUpload: true,
+
 tunnelRoute: "/monitoring",
+
 disableLogger: true,
+
 automaticVercelMonitors: true,
 });
