@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "url": [
-        "https://game-universe.vercel.app/"
+        "https://game-universe-vert.vercel.app/"
       ],
       "numberOfRuns": 3,
       "settings": {
