@@ -60,4 +60,4 @@ jobs:
       - name: Run Lighthouse CI Audit
         uses: treosh/lighthouse-ci-action@v11
         with:
-          urls: https://game-universe.vercel.app
+          urls: https://game-universe-vert.vercel.app/
