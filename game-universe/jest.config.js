@@ -29,19 +29,6 @@ const customJestConfig = {
     transformIgnorePatterns: [
         '/node_modules/(?!(next|next-auth|@next-auth)/)',
     ],
-    collectCoverageFrom: [
-        'src/**/*.{js,jsx,ts,tsx}',
-        '!src/**/*.d.ts',
-        '!src/app/api/**',
-        '!src/lib/**',
-        '!src/middleware.ts',
-        '!src/app/layout.tsx',
-        '!src/app/global-error.tsx',
-        '!src/app/not-found.tsx',
-        '!src/app/loading.tsx',
-        '!src/constants/**',
-        '!src/types/**',
-    ],
 
     coverageThreshold: {
         global: {

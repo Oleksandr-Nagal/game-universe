@@ -1,4 +1,4 @@
-// src/app/page.test.tsx
+// src/app/Page.test.tsx
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import HomeContent from '../app/components/HomeContent';

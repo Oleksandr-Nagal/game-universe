@@ -1,4 +1,4 @@
-// game-universe/app/profile/wishlist/__tests__/page.test.tsx
+// game-universe/app/profile/wishlist/__tests__/Page.test.tsx
 import {fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSession } from 'next-auth/react';
@@ -155,7 +155,6 @@ describe('UserWishlistPage', () => {
         const removeButton = screen.getByRole('button', { name: 'Видалити' });
         await userEvent.click(removeButton);
 
-        // Перевіряємо виклик confirm
         expect(mockConfirm).toHaveBeenCalledWith('Ви впевнені, що хочете видалити цю гру зі списку бажань?');
 
         await waitFor(() => {
@@ -221,7 +220,7 @@ describe('UserWishlistPage', () => {
         render(<UserWishlistPage />);
 
         await waitFor(() => {
-            expect(screen.getByText('Ваш список бажань порожній.')).toBeInTheDocument(); // Wait for content to load
+            expect(screen.getByText('Ваш список бажань порожній.')).toBeInTheDocument();
         });
 
         const profileButton = screen.getByRole('link', { name: 'Назад до Профілю' });
