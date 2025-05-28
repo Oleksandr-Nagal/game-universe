@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
+
 export async function POST(request: Request) {
     try {
         const { name, email, password } = await request.json();
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        const defaultAvatarUrl = '/avatars/user.png';
+
         const newUser = await prisma.user.create({
             data: {
                 name: name ? name.trim() : null,
@@ -43,6 +46,7 @@ export async function POST(request: Request) {
                 password: hashedPassword,
                 role: UserRole.USER,
                 emailVerified: new Date(),
+                image: defaultAvatarUrl,
             },
         });
 
@@ -54,6 +58,7 @@ export async function POST(request: Request) {
             emailVerified: newUser.emailVerified,
             createdAt: newUser.createdAt,
             updatedAt: newUser.updatedAt,
+            image: newUser.image,
         };
 
         return NextResponse.json(
