@@ -1,7 +1,11 @@
+// src/app/api/register/route.ts
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
+
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 
 export async function POST(request: Request) {
     try {
@@ -37,7 +41,14 @@ export async function POST(request: Request) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const defaultAvatarUrl = '/avatars/user.png';
+        if (!CLOUDINARY_CLOUD_NAME) {
+            console.error('CLOUDINARY_CLOUD_NAME is not defined in environment variables.');
+            return NextResponse.json(
+                { error: 'Server configuration error: Cloudinary cloud name missing.' },
+                { status: 500 }
+            );
+        }
+        const defaultAvatarUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/v1748411203/avatar6.png`;
 
         const newUser = await prisma.user.create({
             data: {

@@ -2,7 +2,6 @@ import {withSentryConfig} from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 import type { Configuration as WebpackConfig } from 'webpack';
 
-/** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
     webpack: (config: WebpackConfig) => {
         if (Array.isArray(config.externals)) {
@@ -19,6 +18,12 @@ const nextConfig: NextConfig = {
     },
     images: {
         remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'res.cloudinary.com',
+                port: '',
+                pathname: '/dqordf8f5/**',
+            },
             {
                 protocol: 'https',
                 hostname: 'upload.wikimedia.org',
@@ -51,18 +56,30 @@ const nextConfig: NextConfig = {
                 protocol: 'https',
                 hostname: 'img.freepik.com',
             },
+            {
+                protocol: 'https',
+                hostname: 'game-universe.vercel.app',
+                port: '',
+                pathname: '**',
+            },
+            {
+                protocol: 'http',
+                hostname: 'localhost',
+                port: '3000',
+                pathname: '**',
+            },
         ],
         dangerouslyAllowSVG: true,
     },
 };
-export default withSentryConfig(nextConfig, {
 
-org: "ztueduua",
-project: "nextjs-coursework",
-authToken: process.env.SENTRY_AUTH_TOKEN,
-silent: !process.env.CI,
-widenClientFileUpload: true,
-tunnelRoute: "/monitoring",
-disableLogger: true,
-automaticVercelMonitors: true,
+export default withSentryConfig(nextConfig, {
+    org: "ztueduua",
+    project: "nextjs-coursework",
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    silent: !process.env.CI,
+    widenClientFileUpload: true,
+    tunnelRoute: "/monitoring",
+    disableLogger: true,
+    automaticVercelMonitors: true,
 });
